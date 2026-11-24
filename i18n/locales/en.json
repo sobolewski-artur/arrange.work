@@ -1,6 +1,10 @@
 {
   "welcome": "Welcome to arrange.work",
   "language": "Language",
+  "account": {
+    "title": "Account",
+    "back": "Back"
+  },
   "auth": {
     "signIn": "Sign in",
     "signUp": "Sign up",

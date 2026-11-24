@@ -1,14 +1,8 @@
 <script setup lang="ts">
-import { signOut } from 'firebase/auth'
-
 const { locale, locales } = useI18n()
 const switchLocalePath = useSwitchLocalePath()
 const localePath = useLocalePath()
 const user = useCurrentUser()
-
-function logOut() {
-  return signOut(useFirebaseAuth())
-}
 </script>
 
 <template>
@@ -26,10 +20,13 @@ function logOut() {
           class="size-8 rounded-full"
         >
         <span>{{ $t('auth.signedInAs', { name: user.displayName || user.email }) }}</span>
+        <NuxtLink :to="localePath('/account')" class="rounded-md bg-white px-3 py-1 ring-1 ring-slate-200 hover:bg-slate-100">
+          {{ $t('account.title') }}
+        </NuxtLink>
         <button
           type="button"
           class="rounded-md bg-white px-3 py-1 ring-1 ring-slate-200 hover:bg-slate-100"
-          @click="logOut"
+          @click="signOutUser"
         >
           {{ $t('auth.signOut') }}
         </button>

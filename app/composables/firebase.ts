@@ -1,4 +1,4 @@
-import { getAuth, type User } from 'firebase/auth'
+import { getAuth, signOut, type User } from 'firebase/auth'
 import { getFirestore } from 'firebase/firestore'
 
 function requireClient(name: string) {
@@ -29,6 +29,16 @@ export function useFirestore() {
 export function useCurrentUser(): Readonly<Ref<User | null | undefined>> {
   if (import.meta.server) return shallowRef(undefined)
   return useNuxtApp().$currentUser
+}
+
+/**
+ * Signs out and goes to the home page. Navigating first means a protected page
+ * isn't bounced to /login by the sign-out watcher in plugins/firebase.client.ts.
+ */
+export async function signOutUser() {
+  const { $localePath } = useNuxtApp()
+  await navigateTo($localePath('/'))
+  await signOut(useFirebaseAuth())
 }
 
 /** Resolves once Firebase has restored the persisted session (client-only). */
