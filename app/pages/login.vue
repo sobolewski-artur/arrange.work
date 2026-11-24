@@ -8,6 +8,7 @@ import {
   signInWithEmailAndPassword,
   signInWithPopup,
   signInWithRedirect,
+  updateProfile,
   type User
 } from 'firebase/auth'
 
@@ -23,8 +24,11 @@ const mode = computed<'signin' | 'signup'>(() => (route.query.mode === 'signup' 
 
 useHead(() => ({ title: mode.value === 'signup' ? t('auth.signUp') : t('auth.signIn') }))
 
+const displayName = ref('')
 const email = ref('')
 const password = ref('')
+
+const MAX_DISPLAY_NAME_LENGTH = 50
 const pending = ref<'google' | 'email' | 'reset' | null>(null)
 const error = ref<string | null>(null)
 const notice = ref<string | null>(null)
@@ -132,10 +136,17 @@ async function submitEmail() {
   try {
     if (mode.value === 'signup') {
       const { user: created } = await createUserWithEmailAndPassword(auth, email.value.trim(), password.value)
+      // Set the name before sending the verification email, so its template can use %DISPLAY_NAME%.
+      // The account already exists at this point, so a failure here shouldn't block sign-up.
+      try {
+        await updateProfile(created, { displayName: displayName.value.trim() })
+      } catch (e) {
+        console.error(e)
+      }
       try {
         await sendVerificationEmail(created, redirectTo.value)
       } catch (e) {
-        // Account exists; the verify-email page offers "Resend".
+        // The verify-email page offers "Resend".
         console.error(e)
       }
       await continueAfterSignIn(created)
@@ -219,6 +230,22 @@ const inputClass = 'mt-1 block w-full rounded-lg bg-white px-3 py-2 text-sm ring
       </div>
 
       <form class="space-y-4" @submit.prevent="submitEmail">
+        <label v-if="mode === 'signup'" class="block text-sm font-medium">
+          {{ $t('auth.displayName') }}
+          <input
+            v-model="displayName"
+            type="text"
+            name="name"
+            autocomplete="name"
+            required
+            pattern=".*\S.*"
+            :maxlength="MAX_DISPLAY_NAME_LENGTH"
+            :title="$t('auth.errors.missingDisplayName')"
+            :disabled="busy"
+            :class="inputClass"
+          >
+        </label>
+
         <label class="block text-sm font-medium">
           {{ $t('auth.email') }}
           <input
