@@ -1,0 +1,7 @@
+# Compiled output
+lib/
+
+node_modules/
+
+# Local env files for the emulator (e.g. .env.local, .secret.local)
+*.local

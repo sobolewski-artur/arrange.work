@@ -1,0 +1,24 @@
+# Firebase App Hosting backend settings (Cloud Run).
+# https://firebase.google.com/docs/app-hosting/configure
+#
+# Nuxt builds with Nitro's `firebase-app-hosting` preset automatically when built on App Hosting.
+# Deploy from this folder with: firebase deploy --only apphosting
+
+runConfig:
+  minInstances: 0
+  # maxInstances: 100
+  # concurrency: 80
+  # cpu: 1
+  # memoryMiB: 512
+
+# Environment variables and secrets (BUILD and/or RUNTIME).
+# Nuxt runtime config can be overridden here, e.g. NUXT_PUBLIC_I18N_BASE_URL.
+# https://firebase.google.com/docs/app-hosting/configure#user-defined-environment
+# env:
+#   - variable: NUXT_PUBLIC_I18N_BASE_URL
+#     value: https://arrange.work
+#     availability:
+#       - BUILD
+#       - RUNTIME
+#   - variable: SOME_API_KEY
+#     secret: someApiKeySecretName

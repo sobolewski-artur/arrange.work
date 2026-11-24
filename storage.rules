@@ -1,0 +1,20 @@
+rules_version = '2';
+
+// Everything is denied unless a rule below allows it.
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    function isOwner(uid) {
+      return request.auth != null
+        && request.auth.uid == uid
+        && request.auth.token.email_verified == true;
+    }
+
+    // Per-user files: users/{uid}/... (max 10 MB per upload).
+    match /users/{uid}/{allPaths=**} {
+      allow read, delete: if isOwner(uid);
+      allow create, update: if isOwner(uid)
+        && request.resource.size < 10 * 1024 * 1024;
+    }
+  }
+}

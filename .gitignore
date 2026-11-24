@@ -18,6 +18,10 @@ logs
 .fleet
 .idea
 
+# Firebase CLI cache / emulator data
+.firebase
+emulator-data
+
 # Local env files
 .env
 .env.*

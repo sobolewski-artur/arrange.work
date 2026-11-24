@@ -1,0 +1,25 @@
+rules_version = '2';
+
+// Everything is denied unless a rule below allows it.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // The app requires a verified email to use protected pages; enforce the same here.
+    function isVerified() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isOwner(uid) {
+      return isVerified() && request.auth.uid == uid;
+    }
+
+    // Per-user documents: users/{uid} and anything nested under it.
+    match /users/{uid}/{document=**} {
+      allow read, write: if isOwner(uid);
+    }
+  }
+}
