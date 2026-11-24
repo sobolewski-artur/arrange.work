@@ -2,7 +2,7 @@ import { updateProfile, type User } from 'firebase/auth'
 import { deleteObject, getDownloadURL, listAll, ref as storageRef, uploadBytes } from 'firebase/storage'
 
 /** Largest image file accepted before resizing (the uploaded avatar itself is much smaller). */
-export const MAX_AVATAR_SOURCE_MB = 20
+export const MAX_AVATAR_SOURCE_MB = 2
 
 /** Avatars are stored as squares of at most this many pixels per side. */
 const AVATAR_SIZE = 256

@@ -23,7 +23,7 @@ service firebase.storage {
     match /avatars/{uid}/{fileName} {
       allow read, delete: if isOwner(uid);
       allow create: if isOwner(uid)
-        && request.resource.size < 1 * 1024 * 1024
+        && request.resource.size < 2 * 1024 * 1024
         && request.resource.contentType.matches('image/(webp|png|jpeg)');
     }
   }
