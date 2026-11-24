@@ -30,6 +30,9 @@ export default defineNuxtConfig({
   },
 
   i18n: {
+    // Used for absolute canonical/hreflang/og:url links. Override per environment
+    // (e.g. staging) with NUXT_PUBLIC_I18N_BASE_URL.
+    baseUrl: 'https://arrange.work',
     defaultLocale: 'en',
     strategy: 'prefix_except_default',
     locales: [
