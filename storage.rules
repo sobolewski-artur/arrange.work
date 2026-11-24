@@ -16,5 +16,15 @@ service firebase.storage {
       allow create, update: if isOwner(uid)
         && request.resource.size < 10 * 1024 * 1024;
     }
+
+    // Profile photos: avatars/{uid}/{file}, resized in the browser before upload.
+    // They're displayed through their download URL (which carries an access token and
+    // bypasses these rules), so anyone the URL is shared with can see the picture.
+    match /avatars/{uid}/{fileName} {
+      allow read, delete: if isOwner(uid);
+      allow create: if isOwner(uid)
+        && request.resource.size < 1 * 1024 * 1024
+        && request.resource.contentType.matches('image/(webp|png|jpeg)');
+    }
   }
 }

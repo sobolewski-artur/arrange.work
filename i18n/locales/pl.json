@@ -12,8 +12,18 @@
     "back": "Wróć",
     "save": "Zapisz",
     "saved": "Zaktualizowano nazwę wyświetlaną.",
+    "photo": "Zdjęcie profilowe",
+    "uploadPhoto": "Dodaj zdjęcie",
+    "changePhoto": "Zmień zdjęcie",
+    "removePhoto": "Usuń",
+    "photoHint": "JPG, PNG, WebP lub GIF, do {max} MB. Zdjęcie zostanie przycięte do kwadratu.",
+    "photoSaved": "Zaktualizowano zdjęcie profilowe.",
+    "photoRemoved": "Usunięto zdjęcie profilowe.",
     "errors": {
-      "saveFailed": "Nie udało się zapisać nazwy wyświetlanej. Spróbuj ponownie."
+      "saveFailed": "Nie udało się zapisać nazwy wyświetlanej. Spróbuj ponownie.",
+      "photoUnreadable": "Nie udało się odczytać tego obrazu. Spróbuj pliku JPG lub PNG.",
+      "photoTooLarge": "Ten obraz jest za duży. Wybierz plik mniejszy niż {max} MB.",
+      "photoFailed": "Nie udało się zaktualizować zdjęcia profilowego. Spróbuj ponownie."
     }
   },
   "verify": {

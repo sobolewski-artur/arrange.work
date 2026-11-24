@@ -12,8 +12,18 @@
     "back": "Back",
     "save": "Save",
     "saved": "Display name updated.",
+    "photo": "Profile photo",
+    "uploadPhoto": "Upload photo",
+    "changePhoto": "Change photo",
+    "removePhoto": "Remove",
+    "photoHint": "JPG, PNG, WebP or GIF, up to {max} MB. It will be cropped to a square.",
+    "photoSaved": "Profile photo updated.",
+    "photoRemoved": "Profile photo removed.",
     "errors": {
-      "saveFailed": "Couldn't save your display name. Please try again."
+      "saveFailed": "Couldn't save your display name. Please try again.",
+      "photoUnreadable": "Couldn't read this image. Try a JPG or PNG file.",
+      "photoTooLarge": "This image is too large. Choose a file under {max} MB.",
+      "photoFailed": "Couldn't update your profile photo. Please try again."
     }
   },
   "verify": {

@@ -1,5 +1,6 @@
 import { getAuth, sendEmailVerification, signOut, type User } from 'firebase/auth'
 import { getFirestore } from 'firebase/firestore'
+import { getStorage } from 'firebase/storage'
 
 function requireClient(name: string) {
   if (import.meta.server) {
@@ -20,6 +21,12 @@ export function useFirebaseAuth() {
 export function useFirestore() {
   requireClient('useFirestore')
   return getFirestore()
+}
+
+/** Cloud Storage instance for the default bucket (client-only). */
+export function useFirebaseStorage() {
+  requireClient('useFirebaseStorage')
+  return getStorage()
 }
 
 /**

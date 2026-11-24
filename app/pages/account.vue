@@ -52,6 +52,58 @@ async function saveDisplayName() {
     saving.value = false
   }
 }
+
+// --- Profile photo ---
+
+const fileInput = ref<HTMLInputElement | null>(null)
+const photoBusy = ref(false)
+const photoError = ref<string | null>(null)
+const photoStatus = ref<string | null>(null)
+
+const initial = computed(() => (user.value?.displayName || user.value?.email || '?').trim().charAt(0).toUpperCase())
+
+function photoErrorMessage(e: unknown) {
+  if (e instanceof AvatarFileError) {
+    return e.reason === 'tooLarge'
+      ? t('account.errors.photoTooLarge', { max: MAX_AVATAR_SOURCE_MB })
+      : t('account.errors.photoUnreadable')
+  }
+  const code = (e as FirebaseError).code
+  return code === 'auth/network-request-failed' || code === 'storage/retry-limit-exceeded'
+    ? t('auth.errors.network')
+    : code === 'auth/too-many-requests'
+      ? t('auth.errors.tooManyRequests')
+      : t('account.errors.photoFailed')
+}
+
+async function runPhotoAction(action: (u: NonNullable<typeof user.value>) => Promise<void>, successMessage: string) {
+  const u = user.value
+  if (!u || photoBusy.value) return
+  photoBusy.value = true
+  photoError.value = null
+  photoStatus.value = null
+  try {
+    await action(u)
+    photoStatus.value = successMessage
+  } catch (e) {
+    console.error(e)
+    photoError.value = photoErrorMessage(e)
+  } finally {
+    photoBusy.value = false
+  }
+}
+
+function onPhotoSelected(event: Event) {
+  const input = event.target as HTMLInputElement
+  const file = input.files?.[0]
+  // Reset so picking the same file again still fires `change`.
+  input.value = ''
+  if (file) runPhotoAction(u => uploadAvatar(u, file), t('account.photoSaved'))
+}
+
+function removePhoto() {
+  runPhotoAction(removeAvatar, t('account.photoRemoved'))
+}
 </script>
 
 <template>
@@ -63,20 +115,67 @@ async function saveDisplayName() {
       </NuxtLink>
 
       <div class="mt-6 flex items-center gap-4">
-        <img
-          v-if="user.photoURL"
-          :src="user.photoURL"
-          alt=""
-          referrerpolicy="no-referrer"
-          class="size-14 rounded-full"
-        >
+        <div class="relative size-14 shrink-0">
+          <img
+            v-if="user.photoURL"
+            :src="user.photoURL"
+            alt=""
+            referrerpolicy="no-referrer"
+            class="size-14 rounded-full object-cover"
+          >
+          <div
+            v-else
+            aria-hidden="true"
+            class="flex size-14 items-center justify-center rounded-full bg-well text-xl font-semibold text-muted"
+          >
+            {{ initial }}
+          </div>
+          <div v-if="photoBusy" class="absolute inset-0 flex items-center justify-center rounded-full bg-page/60">
+            <span class="size-5 animate-spin rounded-full border-2 border-fg border-t-transparent" />
+          </div>
+        </div>
         <div class="min-w-0">
           <h1 class="truncate text-xl font-bold tracking-tight">{{ user.displayName || user.email }}</h1>
           <p class="truncate text-sm text-muted">{{ user.email }}</p>
         </div>
       </div>
 
-      <form class="mt-8 border-t border-line pt-6" @submit.prevent="saveDisplayName">
+      <section class="mt-8 border-t border-line pt-6" :aria-busy="photoBusy">
+        <h2 class="text-sm font-medium">{{ $t('account.photo') }}</h2>
+        <input
+          ref="fileInput"
+          type="file"
+          accept="image/*"
+          class="sr-only"
+          tabindex="-1"
+          aria-hidden="true"
+          @change="onPhotoSelected"
+        >
+        <div class="mt-2 flex flex-wrap gap-2">
+          <button
+            type="button"
+            class="rounded-lg bg-surface px-4 py-2 text-sm font-medium ring-1 ring-line-strong transition hover:bg-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-fg disabled:cursor-not-allowed disabled:opacity-60"
+            :disabled="photoBusy"
+            @click="fileInput?.click()"
+          >
+            {{ photoBusy ? $t('auth.pending') : user.photoURL ? $t('account.changePhoto') : $t('account.uploadPhoto') }}
+          </button>
+          <button
+            v-if="user.photoURL"
+            type="button"
+            class="rounded-lg px-4 py-2 text-sm font-medium text-danger transition hover:bg-danger-soft focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-fg disabled:cursor-not-allowed disabled:opacity-60"
+            :disabled="photoBusy"
+            @click="removePhoto"
+          >
+            {{ $t('account.removePhoto') }}
+          </button>
+        </div>
+        <p class="mt-2 text-xs text-muted">{{ $t('account.photoHint', { max: MAX_AVATAR_SOURCE_MB }) }}</p>
+        <p v-if="photoStatus" role="status" class="mt-2 text-sm text-success">{{ photoStatus }}</p>
+        <p v-if="photoError" role="alert" class="mt-2 text-sm text-danger">{{ photoError }}</p>
+      </section>
+
+      <form class="mt-6 border-t border-line pt-6" @submit.prevent="saveDisplayName">
         <label for="displayName" class="block text-sm font-medium">{{ $t('auth.displayName') }}</label>
         <div class="mt-1 flex gap-2">
           <input
