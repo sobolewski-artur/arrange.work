@@ -1,4 +1,26 @@
 {
   "welcome": "Witaj w arrange.work",
-  "language": "Język"
+  "language": "Język",
+  "auth": {
+    "signIn": "Zaloguj się",
+    "signUp": "Zarejestruj się",
+    "signOut": "Wyloguj się",
+    "signInTitle": "Witaj ponownie",
+    "signInSubtitle": "Zaloguj się do swojego konta arrange.work",
+    "signUpTitle": "Utwórz konto",
+    "signUpSubtitle": "Zacznij korzystać z arrange.work",
+    "signInWithGoogle": "Zaloguj się przez Google",
+    "signUpWithGoogle": "Zarejestruj się przez Google",
+    "pending": "Czekam na Google…",
+    "noAccount": "Nie masz konta?",
+    "haveAccount": "Masz już konto?",
+    "signedInAs": "Zalogowano jako {name}",
+    "errors": {
+      "operationNotAllowed": "Logowanie przez Google nie jest włączone w tym projekcie.",
+      "unauthorizedDomain": "Ta domena nie ma uprawnień do logowania.",
+      "network": "Błąd sieci. Sprawdź połączenie i spróbuj ponownie.",
+      "accountExists": "Konto z tym adresem e-mail już istnieje i używa innej metody logowania.",
+      "generic": "Logowanie nie powiodło się. Spróbuj ponownie."
+    }
+  }
 }

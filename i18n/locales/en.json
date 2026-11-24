@@ -1,4 +1,26 @@
 {
   "welcome": "Welcome to arrange.work",
-  "language": "Language"
+  "language": "Language",
+  "auth": {
+    "signIn": "Sign in",
+    "signUp": "Sign up",
+    "signOut": "Sign out",
+    "signInTitle": "Welcome back",
+    "signInSubtitle": "Sign in to your arrange.work account",
+    "signUpTitle": "Create your account",
+    "signUpSubtitle": "Get started with arrange.work",
+    "signInWithGoogle": "Sign in with Google",
+    "signUpWithGoogle": "Sign up with Google",
+    "pending": "Waiting for Google…",
+    "noAccount": "Don't have an account?",
+    "haveAccount": "Already have an account?",
+    "signedInAs": "Signed in as {name}",
+    "errors": {
+      "operationNotAllowed": "Google sign-in is not enabled for this project.",
+      "unauthorizedDomain": "This domain is not authorized for sign-in.",
+      "network": "Network error. Check your connection and try again.",
+      "accountExists": "An account with this email already exists with a different sign-in method.",
+      "generic": "Sign-in failed. Please try again."
+    }
+  }
 }
