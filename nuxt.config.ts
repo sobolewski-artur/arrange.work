@@ -2,11 +2,19 @@
 import tailwindcss from '@tailwindcss/vite'
 
 export default defineNuxtConfig({
-  modules: ['@nuxtjs/i18n'],
+  modules: ['@nuxtjs/i18n', '@nuxtjs/color-mode'],
   compatibilityDate: '2025-07-15',
   devtools: { enabled: true },
 
   css: ['~/assets/css/main.css'],
+
+  // Adds `dark` / `light` to <html> before first paint (no flash), following the OS by default.
+  colorMode: {
+    preference: 'system',
+    fallback: 'light',
+    classSuffix: '',
+    storageKey: 'arrange-work-color-mode'
+  },
 
   runtimeConfig: {
     public: {

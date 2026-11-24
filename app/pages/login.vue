@@ -188,26 +188,26 @@ onMounted(() => {
 })
 
 const busy = computed(() => pending.value !== null || user.value !== null)
-const inputClass = 'mt-1 block w-full rounded-lg bg-white px-3 py-2 text-sm ring-1 ring-slate-300 placeholder:text-slate-400 focus:outline-2 focus:outline-offset-0 focus:outline-slate-900 disabled:opacity-60'
+const inputClass = 'mt-1 block w-full rounded-lg bg-surface px-3 py-2 text-sm ring-1 ring-line-strong placeholder:text-subtle focus:outline-2 focus:outline-offset-0 focus:outline-fg disabled:opacity-60'
 </script>
 
 <template>
-  <main class="min-h-screen flex items-center justify-center bg-slate-50 px-4 text-slate-900">
-    <div class="w-full max-w-sm rounded-2xl bg-white p-8 shadow-sm ring-1 ring-slate-200">
-      <NuxtLink :to="localePath('/')" class="text-sm font-semibold tracking-tight text-slate-500 hover:text-slate-900">
+  <main class="min-h-screen flex items-center justify-center bg-page px-4 text-fg">
+    <div class="w-full max-w-sm rounded-2xl bg-surface p-8 shadow-sm ring-1 ring-line">
+      <NuxtLink :to="localePath('/')" class="text-sm font-semibold tracking-tight text-muted hover:text-fg">
         arrange.work
       </NuxtLink>
 
       <h1 class="mt-6 text-2xl font-bold tracking-tight">
         {{ mode === 'signup' ? $t('auth.signUpTitle') : $t('auth.signInTitle') }}
       </h1>
-      <p class="mt-1 text-sm text-slate-500">
+      <p class="mt-1 text-sm text-muted">
         {{ mode === 'signup' ? $t('auth.signUpSubtitle') : $t('auth.signInSubtitle') }}
       </p>
 
       <button
         type="button"
-        class="mt-8 flex w-full items-center justify-center gap-3 rounded-lg bg-white px-4 py-2.5 text-sm font-medium ring-1 ring-slate-300 transition hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900 disabled:cursor-not-allowed disabled:opacity-60"
+        class="mt-8 flex w-full items-center justify-center gap-3 rounded-lg bg-surface px-4 py-2.5 text-sm font-medium ring-1 ring-line-strong transition hover:bg-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-fg disabled:cursor-not-allowed disabled:opacity-60"
         :disabled="busy"
         @click="continueWithGoogle"
       >
@@ -221,10 +221,10 @@ const inputClass = 'mt-1 block w-full rounded-lg bg-white px-3 py-2 text-sm ring
         <span v-else>{{ mode === 'signup' ? $t('auth.signUpWithGoogle') : $t('auth.signInWithGoogle') }}</span>
       </button>
 
-      <div class="my-6 flex items-center gap-3 text-xs uppercase tracking-wide text-slate-400">
-        <span class="h-px flex-1 bg-slate-200" />
+      <div class="my-6 flex items-center gap-3 text-xs uppercase tracking-wide text-subtle">
+        <span class="h-px flex-1 bg-line" />
         {{ $t('auth.or') }}
-        <span class="h-px flex-1 bg-slate-200" />
+        <span class="h-px flex-1 bg-line" />
       </div>
 
       <form class="space-y-4" @submit.prevent="submitEmail">
@@ -263,7 +263,7 @@ const inputClass = 'mt-1 block w-full rounded-lg bg-white px-3 py-2 text-sm ring
             <button
               v-if="mode === 'signin'"
               type="button"
-              class="text-xs text-slate-500 underline-offset-4 hover:text-slate-900 hover:underline disabled:opacity-60"
+              class="text-xs text-muted underline-offset-4 hover:text-fg hover:underline disabled:opacity-60"
               :disabled="busy"
               @click="forgotPassword"
             >
@@ -281,14 +281,14 @@ const inputClass = 'mt-1 block w-full rounded-lg bg-white px-3 py-2 text-sm ring
             :disabled="busy"
             :class="inputClass"
           >
-          <p v-if="mode === 'signup'" class="mt-1 text-xs text-slate-500">
+          <p v-if="mode === 'signup'" class="mt-1 text-xs text-muted">
             {{ $t('auth.passwordHint', { min: MIN_PASSWORD_LENGTH }) }}
           </p>
         </div>
 
         <button
           type="submit"
-          class="w-full rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-slate-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900 disabled:cursor-not-allowed disabled:opacity-60"
+          class="w-full rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-on-primary transition hover:bg-primary-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-fg disabled:cursor-not-allowed disabled:opacity-60"
           :disabled="busy"
         >
           <template v-if="pending === 'email'">{{ $t('auth.pending') }}</template>
@@ -296,16 +296,16 @@ const inputClass = 'mt-1 block w-full rounded-lg bg-white px-3 py-2 text-sm ring
         </button>
       </form>
 
-      <p v-if="error" role="alert" class="mt-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700 ring-1 ring-red-200">
+      <p v-if="error" role="alert" class="mt-4 rounded-lg bg-danger-soft px-3 py-2 text-sm text-danger ring-1 ring-danger-line">
         {{ error }}
       </p>
-      <p v-if="notice" role="status" class="mt-4 rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-800 ring-1 ring-emerald-200">
+      <p v-if="notice" role="status" class="mt-4 rounded-lg bg-success-soft px-3 py-2 text-sm text-success ring-1 ring-success-line">
         {{ notice }}
       </p>
 
-      <p class="mt-8 text-center text-sm text-slate-500">
+      <p class="mt-8 text-center text-sm text-muted">
         {{ mode === 'signup' ? $t('auth.haveAccount') : $t('auth.noAccount') }}
-        <button type="button" class="font-medium text-slate-900 underline-offset-4 hover:underline" @click="toggleMode">
+        <button type="button" class="font-medium text-fg underline-offset-4 hover:underline" @click="toggleMode">
           {{ mode === 'signup' ? $t('auth.signIn') : $t('auth.signUp') }}
         </button>
       </p>

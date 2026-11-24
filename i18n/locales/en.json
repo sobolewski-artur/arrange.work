@@ -1,6 +1,12 @@
 {
   "welcome": "Welcome to arrange.work",
   "language": "Language",
+  "theme": {
+    "label": "Theme",
+    "system": "System theme",
+    "light": "Light theme",
+    "dark": "Dark theme"
+  },
   "account": {
     "title": "Account",
     "back": "Back",

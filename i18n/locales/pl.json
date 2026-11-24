@@ -1,6 +1,12 @@
 {
   "welcome": "Witaj w arrange.work",
   "language": "Język",
+  "theme": {
+    "label": "Motyw",
+    "system": "Motyw systemowy",
+    "light": "Motyw jasny",
+    "dark": "Motyw ciemny"
+  },
   "account": {
     "title": "Konto",
     "back": "Wróć",

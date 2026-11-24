@@ -112,30 +112,30 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <main class="min-h-screen flex items-center justify-center bg-slate-50 px-4 text-slate-900">
-    <div v-if="user" class="w-full max-w-sm rounded-2xl bg-white p-8 shadow-sm ring-1 ring-slate-200">
-      <NuxtLink :to="localePath('/')" class="text-sm font-semibold tracking-tight text-slate-500 hover:text-slate-900">
+  <main class="min-h-screen flex items-center justify-center bg-page px-4 text-fg">
+    <div v-if="user" class="w-full max-w-sm rounded-2xl bg-surface p-8 shadow-sm ring-1 ring-line">
+      <NuxtLink :to="localePath('/')" class="text-sm font-semibold tracking-tight text-muted hover:text-fg">
         arrange.work
       </NuxtLink>
 
-      <div class="mt-6 flex size-12 items-center justify-center rounded-full bg-slate-100" aria-hidden="true">
-        <svg class="size-6 text-slate-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+      <div class="mt-6 flex size-12 items-center justify-center rounded-full bg-well" aria-hidden="true">
+        <svg class="size-6 text-fg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
           <rect x="3" y="5" width="18" height="14" rx="2" />
           <path d="m3 7 9 6 9-6" />
         </svg>
       </div>
 
       <h1 class="mt-4 text-2xl font-bold tracking-tight">{{ $t('verify.title') }}</h1>
-      <i18n-t keypath="verify.sentTo" tag="p" class="mt-2 text-sm text-slate-600" scope="global">
+      <i18n-t keypath="verify.sentTo" tag="p" class="mt-2 text-sm text-muted" scope="global">
         <template #email>
-          <strong class="font-medium text-slate-900 break-all">{{ user.email }}</strong>
+          <strong class="font-medium text-fg break-all">{{ user.email }}</strong>
         </template>
       </i18n-t>
-      <p class="mt-2 text-sm text-slate-500">{{ $t('verify.spamHint') }}</p>
+      <p class="mt-2 text-sm text-muted">{{ $t('verify.spamHint') }}</p>
 
       <button
         type="button"
-        class="mt-8 w-full rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-slate-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900 disabled:cursor-not-allowed disabled:opacity-60"
+        class="mt-8 w-full rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-on-primary transition hover:bg-primary-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-fg disabled:cursor-not-allowed disabled:opacity-60"
         :disabled="pending !== null"
         @click="checkVerified()"
       >
@@ -144,7 +144,7 @@ onBeforeUnmount(() => {
 
       <button
         type="button"
-        class="mt-3 w-full rounded-lg bg-white px-4 py-2.5 text-sm font-medium ring-1 ring-slate-300 transition hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900 disabled:cursor-not-allowed disabled:opacity-60"
+        class="mt-3 w-full rounded-lg bg-surface px-4 py-2.5 text-sm font-medium ring-1 ring-line-strong transition hover:bg-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-fg disabled:cursor-not-allowed disabled:opacity-60"
         :disabled="pending !== null || cooldown > 0"
         @click="resend"
       >
@@ -153,16 +153,16 @@ onBeforeUnmount(() => {
         <template v-else>{{ $t('verify.resend') }}</template>
       </button>
 
-      <p v-if="error" role="alert" class="mt-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700 ring-1 ring-red-200">
+      <p v-if="error" role="alert" class="mt-4 rounded-lg bg-danger-soft px-3 py-2 text-sm text-danger ring-1 ring-danger-line">
         {{ error }}
       </p>
-      <p v-if="notice" role="status" class="mt-4 rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-800 ring-1 ring-emerald-200">
+      <p v-if="notice" role="status" class="mt-4 rounded-lg bg-success-soft px-3 py-2 text-sm text-success ring-1 ring-success-line">
         {{ notice }}
       </p>
 
-      <p class="mt-8 text-center text-sm text-slate-500">
+      <p class="mt-8 text-center text-sm text-muted">
         {{ $t('verify.wrongAccount') }}
-        <button type="button" class="font-medium text-slate-900 underline-offset-4 hover:underline" @click="signOutUser">
+        <button type="button" class="font-medium text-fg underline-offset-4 hover:underline" @click="signOutUser">
           {{ $t('auth.signOut') }}
         </button>
       </p>

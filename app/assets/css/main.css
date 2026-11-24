@@ -1,1 +1,80 @@
 @import "tailwindcss";
+
+/* `dark:` follows the `.dark` class that @nuxtjs/color-mode puts on <html>, not just the OS setting. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/*
+ * Semantic color tokens. Components use these (bg-page, bg-surface, text-fg, text-muted,
+ * ring-line, bg-primary, …) instead of raw palette colors, so both themes come from one place.
+ */
+:root {
+  color-scheme: light;
+  --app-page: var(--color-slate-50);
+  --app-surface: var(--color-white);
+  --app-well: var(--color-slate-100);
+  --app-hover: var(--color-slate-100);
+  --app-fg: var(--color-slate-900);
+  --app-muted: var(--color-slate-500);
+  --app-subtle: var(--color-slate-400);
+  --app-line: var(--color-slate-200);
+  --app-line-strong: var(--color-slate-300);
+  --app-primary: var(--color-slate-900);
+  --app-primary-hover: var(--color-slate-700);
+  --app-on-primary: var(--color-white);
+  --app-danger: var(--color-red-700);
+  --app-danger-soft: var(--color-red-50);
+  --app-danger-line: var(--color-red-200);
+  --app-success: var(--color-emerald-800);
+  --app-success-soft: var(--color-emerald-50);
+  --app-success-line: var(--color-emerald-200);
+}
+
+.dark {
+  color-scheme: dark;
+  --app-page: var(--color-slate-950);
+  --app-surface: var(--color-slate-900);
+  --app-well: var(--color-slate-800);
+  --app-hover: var(--color-slate-800);
+  --app-fg: var(--color-slate-100);
+  --app-muted: var(--color-slate-400);
+  --app-subtle: var(--color-slate-500);
+  --app-line: var(--color-slate-800);
+  --app-line-strong: var(--color-slate-700);
+  --app-primary: var(--color-slate-100);
+  --app-primary-hover: var(--color-slate-300);
+  --app-on-primary: var(--color-slate-900);
+  --app-danger: var(--color-red-300);
+  --app-danger-soft: color-mix(in oklab, var(--color-red-950) 60%, transparent);
+  --app-danger-line: var(--color-red-900);
+  --app-success: var(--color-emerald-300);
+  --app-success-soft: color-mix(in oklab, var(--color-emerald-950) 60%, transparent);
+  --app-success-line: var(--color-emerald-900);
+}
+
+@theme inline {
+  --color-page: var(--app-page);
+  --color-surface: var(--app-surface);
+  --color-well: var(--app-well);
+  --color-hover: var(--app-hover);
+  --color-fg: var(--app-fg);
+  --color-muted: var(--app-muted);
+  --color-subtle: var(--app-subtle);
+  --color-line: var(--app-line);
+  --color-line-strong: var(--app-line-strong);
+  --color-primary: var(--app-primary);
+  --color-primary-hover: var(--app-primary-hover);
+  --color-on-primary: var(--app-on-primary);
+  --color-danger: var(--app-danger);
+  --color-danger-soft: var(--app-danger-soft);
+  --color-danger-line: var(--app-danger-line);
+  --color-success: var(--app-success);
+  --color-success-soft: var(--app-success-soft);
+  --color-success-line: var(--app-success-line);
+}
+
+@layer base {
+  html {
+    background-color: var(--app-page);
+    color: var(--app-fg);
+  }
+}

@@ -55,10 +55,10 @@ async function saveDisplayName() {
 </script>
 
 <template>
-  <main class="min-h-screen flex items-center justify-center bg-slate-50 px-4 text-slate-900">
+  <main class="min-h-screen flex items-center justify-center bg-page px-4 text-fg">
     <!-- `user` is only set in the browser, so nothing user-specific is server-rendered. -->
-    <div v-if="user" class="w-full max-w-md rounded-2xl bg-white p-8 shadow-sm ring-1 ring-slate-200">
-      <NuxtLink :to="localePath('/')" class="text-sm text-slate-500 hover:text-slate-900">
+    <div v-if="user" class="w-full max-w-md rounded-2xl bg-surface p-8 shadow-sm ring-1 ring-line">
+      <NuxtLink :to="localePath('/')" class="text-sm text-muted hover:text-fg">
         ← {{ $t('account.back') }}
       </NuxtLink>
 
@@ -72,11 +72,11 @@ async function saveDisplayName() {
         >
         <div class="min-w-0">
           <h1 class="truncate text-xl font-bold tracking-tight">{{ user.displayName || user.email }}</h1>
-          <p class="truncate text-sm text-slate-500">{{ user.email }}</p>
+          <p class="truncate text-sm text-muted">{{ user.email }}</p>
         </div>
       </div>
 
-      <form class="mt-8 border-t border-slate-200 pt-6" @submit.prevent="saveDisplayName">
+      <form class="mt-8 border-t border-line pt-6" @submit.prevent="saveDisplayName">
         <label for="displayName" class="block text-sm font-medium">{{ $t('auth.displayName') }}</label>
         <div class="mt-1 flex gap-2">
           <input
@@ -90,23 +90,23 @@ async function saveDisplayName() {
             :maxlength="MAX_DISPLAY_NAME_LENGTH"
             :title="$t('auth.errors.missingDisplayName')"
             :disabled="saving"
-            class="block w-full min-w-0 rounded-lg bg-white px-3 py-2 text-sm ring-1 ring-slate-300 focus:outline-2 focus:outline-offset-0 focus:outline-slate-900 disabled:opacity-60"
+            class="block w-full min-w-0 rounded-lg bg-surface px-3 py-2 text-sm ring-1 ring-line-strong focus:outline-2 focus:outline-offset-0 focus:outline-fg disabled:opacity-60"
           >
           <button
             type="submit"
-            class="shrink-0 rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900 disabled:cursor-not-allowed disabled:opacity-60"
+            class="shrink-0 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-on-primary transition hover:bg-primary-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-fg disabled:cursor-not-allowed disabled:opacity-60"
             :disabled="!canSave"
           >
             {{ saving ? $t('auth.pending') : $t('account.save') }}
           </button>
         </div>
-        <p v-if="saved" role="status" class="mt-2 text-sm text-emerald-700">{{ $t('account.saved') }}</p>
-        <p v-if="error" role="alert" class="mt-2 text-sm text-red-700">{{ error }}</p>
+        <p v-if="saved" role="status" class="mt-2 text-sm text-success">{{ $t('account.saved') }}</p>
+        <p v-if="error" role="alert" class="mt-2 text-sm text-danger">{{ error }}</p>
       </form>
 
       <button
         type="button"
-        class="mt-8 w-full rounded-lg bg-white px-4 py-2.5 text-sm font-medium ring-1 ring-slate-300 transition hover:bg-slate-50"
+        class="mt-8 w-full rounded-lg bg-surface px-4 py-2.5 text-sm font-medium ring-1 ring-line-strong transition hover:bg-hover"
         @click="signOutUser"
       >
         {{ $t('auth.signOut') }}
