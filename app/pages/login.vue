@@ -27,8 +27,6 @@ useHead(() => ({ title: mode.value === 'signup' ? t('auth.signUp') : t('auth.sig
 const displayName = ref('')
 const email = ref('')
 const password = ref('')
-
-const MAX_DISPLAY_NAME_LENGTH = 50
 const pending = ref<'google' | 'email' | 'reset' | null>(null)
 const error = ref<string | null>(null)
 const notice = ref<string | null>(null)

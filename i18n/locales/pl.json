@@ -3,7 +3,12 @@
   "language": "Język",
   "account": {
     "title": "Konto",
-    "back": "Wróć"
+    "back": "Wróć",
+    "save": "Zapisz",
+    "saved": "Zaktualizowano nazwę wyświetlaną.",
+    "errors": {
+      "saveFailed": "Nie udało się zapisać nazwy wyświetlanej. Spróbuj ponownie."
+    }
   },
   "verify": {
     "title": "Potwierdź swój e-mail",

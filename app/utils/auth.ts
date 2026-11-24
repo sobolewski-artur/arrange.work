@@ -1,5 +1,8 @@
 import type { RouteLocationNormalizedLoaded } from 'vue-router'
 
+/** Max length of a user's display name (sign-up and account page). */
+export const MAX_DISPLAY_NAME_LENGTH = 50
+
 /** Whether the route (or any parent route) uses the `auth` middleware. */
 export function routeRequiresAuth(route: RouteLocationNormalizedLoaded): boolean {
   return route.matched.some((record) => {

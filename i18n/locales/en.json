@@ -3,7 +3,12 @@
   "language": "Language",
   "account": {
     "title": "Account",
-    "back": "Back"
+    "back": "Back",
+    "save": "Save",
+    "saved": "Display name updated.",
+    "errors": {
+      "saveFailed": "Couldn't save your display name. Please try again."
+    }
   },
   "verify": {
     "title": "Verify your email",

@@ -32,6 +32,15 @@ export function useCurrentUser(): Readonly<Ref<User | null | undefined>> {
 }
 
 /**
+ * Notifies `useCurrentUser()` watchers after mutating the User in place (e.g. `updateProfile`),
+ * which Firebase only reports when the ID token also changes.
+ */
+export function refreshCurrentUser() {
+  if (import.meta.server) return
+  triggerRef(useNuxtApp().$currentUser)
+}
+
+/**
  * Signs out and goes to the home page. Navigating first means a protected page
  * isn't bounced to /login by the sign-out watcher in plugins/firebase.client.ts.
  */
