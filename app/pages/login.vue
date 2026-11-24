@@ -7,7 +7,8 @@ import {
   sendPasswordResetEmail,
   signInWithEmailAndPassword,
   signInWithPopup,
-  signInWithRedirect
+  signInWithRedirect,
+  type User
 } from 'firebase/auth'
 
 const { t, locale } = useI18n()
@@ -31,14 +32,18 @@ const notice = ref<string | null>(null)
 // Minimum length from the project's password policy (Firebase console → Authentication → Settings).
 const MIN_PASSWORD_LENGTH = 6
 
-// Only allow same-site relative redirects.
-const redirectTo = computed(() => {
-  const r = route.query.redirect
-  return typeof r === 'string' && r.startsWith('/') && !r.startsWith('//') ? r : localePath('/')
-})
+const redirectTo = computed(() => safeRedirect(route.query.redirect, localePath('/')))
 
+// Unverified email/password accounts go to /verify-email first (Google accounts are verified).
+function continueAfterSignIn(u: User) {
+  if (!u.emailVerified) return redirectToVerifyEmail(redirectTo.value)
+  return navigateTo(redirectTo.value, { replace: true })
+}
+
+// Already signed in (or returning from the Google redirect fallback). While a sign-in started
+// on this page is in progress, its handler navigates instead, after any follow-up work.
 watch(user, (u) => {
-  if (u) navigateTo(redirectTo.value, { replace: true })
+  if (u && !pending.value) continueAfterSignIn(u)
 }, { immediate: true })
 
 function resetMessages() {
@@ -106,8 +111,8 @@ async function continueWithGoogle() {
   provider.setCustomParameters({ prompt: 'select_account' })
 
   try {
-    await signInWithPopup(auth, provider)
-    // The `user` watcher handles navigation.
+    const { user: signedIn } = await signInWithPopup(auth, provider)
+    await continueAfterSignIn(signedIn)
   } catch (e) {
     if ((e as FirebaseError).code === 'auth/popup-blocked') {
       await signInWithRedirect(auth, provider)
@@ -126,11 +131,18 @@ async function submitEmail() {
 
   try {
     if (mode.value === 'signup') {
-      await createUserWithEmailAndPassword(auth, email.value.trim(), password.value)
+      const { user: created } = await createUserWithEmailAndPassword(auth, email.value.trim(), password.value)
+      try {
+        await sendVerificationEmail(created, redirectTo.value)
+      } catch (e) {
+        // Account exists; the verify-email page offers "Resend".
+        console.error(e)
+      }
+      await continueAfterSignIn(created)
     } else {
-      await signInWithEmailAndPassword(auth, email.value.trim(), password.value)
+      const { user: signedIn } = await signInWithEmailAndPassword(auth, email.value.trim(), password.value)
+      await continueAfterSignIn(signedIn)
     }
-    // The `user` watcher handles navigation.
   } catch (e) {
     fail(e)
   } finally {

@@ -1,4 +1,4 @@
-import { getAuth, signOut, type User } from 'firebase/auth'
+import { getAuth, sendEmailVerification, signOut, type User } from 'firebase/auth'
 import { getFirestore } from 'firebase/firestore'
 
 function requireClient(name: string) {
@@ -39,6 +39,18 @@ export async function signOutUser() {
   const { $localePath } = useNuxtApp()
   await navigateTo($localePath('/'))
   await signOut(useFirebaseAuth())
+}
+
+/**
+ * Sends the verification email in the current locale. The link's "Continue" button returns to
+ * /verify-email, which then forwards to `redirect`. The continue URL's domain must be listed in
+ * Firebase console → Authentication → Settings → Authorized domains.
+ */
+export function sendVerificationEmail(user: User, redirect?: string) {
+  const { $i18n, $localePath } = useNuxtApp()
+  useFirebaseAuth().languageCode = $i18n.locale.value
+  const continuePath = $localePath({ path: '/verify-email', query: redirect ? { redirect } : {} })
+  return sendEmailVerification(user, { url: new URL(continuePath, window.location.origin).href })
 }
 
 /** Resolves once Firebase has restored the persisted session (client-only). */

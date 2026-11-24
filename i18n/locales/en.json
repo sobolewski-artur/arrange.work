@@ -5,6 +5,17 @@
     "title": "Account",
     "back": "Back"
   },
+  "verify": {
+    "title": "Verify your email",
+    "sentTo": "We sent a verification link to {email}. Open it to activate your account, then come back here.",
+    "spamHint": "Can't find it? Check your spam folder.",
+    "continue": "I've verified my email",
+    "notYet": "Your email isn't verified yet. Click the link in the email first.",
+    "resend": "Resend email",
+    "resendIn": "Resend in {s}s",
+    "resent": "Verification email sent.",
+    "wrongAccount": "Wrong account?"
+  },
   "auth": {
     "signIn": "Sign in",
     "signUp": "Sign up",

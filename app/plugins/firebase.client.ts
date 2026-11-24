@@ -1,5 +1,5 @@
 import { getApps, initializeApp } from 'firebase/app'
-import { getAuth, onAuthStateChanged, type User } from 'firebase/auth'
+import { getAuth, onIdTokenChanged, type User } from 'firebase/auth'
 import { getFirestore } from 'firebase/firestore'
 
 // Firebase runs in the browser only. On the server there is no signed-in user,
@@ -13,9 +13,13 @@ export default defineNuxtPlugin((nuxtApp) => {
 
   // undefined = not resolved yet, null = signed out
   const currentUser = shallowRef<User | null | undefined>(undefined)
-  onAuthStateChanged(auth, (user) => {
+  // onIdTokenChanged (not onAuthStateChanged) so that refreshing the token after
+  // `user.reload()` — e.g. once the email is verified — also notifies watchers.
+  onIdTokenChanged(auth, (user) => {
     const signedOut = !!currentUser.value && !user
     currentUser.value = user
+    // Same User object after a token refresh: assignment alone wouldn't trigger.
+    triggerRef(currentUser)
 
     // Middleware only runs on navigation, so handle losing the session (sign-out in another
     // tab, revoked token, …) while a protected page is open.

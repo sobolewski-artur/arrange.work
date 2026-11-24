@@ -1,5 +1,6 @@
 /**
  * Protects a page: `definePageMeta({ middleware: 'auth' })`.
+ * Requires a signed-in user with a verified email address.
  *
  * Firebase Auth only exists in the browser, so on the server this lets the request through
  * and the check runs on the client (Nuxt re-runs middleware there on the initial load).
@@ -11,4 +12,5 @@ export default defineNuxtRouteMiddleware(async (to) => {
 
   const user = await waitForAuth()
   if (!user) return redirectToLogin(to)
+  if (!user.emailVerified) return redirectToVerifyEmail(to.fullPath)
 })

@@ -5,6 +5,17 @@
     "title": "Konto",
     "back": "Wróć"
   },
+  "verify": {
+    "title": "Potwierdź swój e-mail",
+    "sentTo": "Wysłaliśmy link weryfikacyjny na adres {email}. Otwórz go, aby aktywować konto, a potem wróć tutaj.",
+    "spamHint": "Nie widzisz wiadomości? Sprawdź folder spam.",
+    "continue": "E-mail potwierdzony, kontynuuj",
+    "notYet": "Twój e-mail nie jest jeszcze potwierdzony. Najpierw kliknij link w wiadomości.",
+    "resend": "Wyślij ponownie",
+    "resendIn": "Wyślij ponownie za {s} s",
+    "resent": "Wysłano e-mail weryfikacyjny.",
+    "wrongAccount": "Nie to konto?"
+  },
   "auth": {
     "signIn": "Zaloguj się",
     "signUp": "Zarejestruj się",
