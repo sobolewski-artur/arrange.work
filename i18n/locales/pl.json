@@ -195,6 +195,37 @@
         "delete": "Nie udało się usunąć zlecenia. Spróbuj ponownie."
       }
     },
+    "details": {
+      "title": "Zlecenie",
+      "posted": "Dodano",
+      "applications": {
+        "title": "Zgłoszenia",
+        "empty": "Brak zgłoszeń."
+      },
+      "applied": {
+        "title": "Wysłano zgłoszenie",
+        "on": "Wysłano {date}.",
+        "shared": "Klient widzi Twoją nazwę, e-mail i wiadomość."
+      },
+      "withdraw": "Wycofaj zgłoszenie",
+      "confirmWithdraw": "Wycofać zgłoszenie? Klient przestanie je widzieć.",
+      "closed": "To zlecenie nie przyjmuje już zgłoszeń.",
+      "apply": {
+        "title": "Chcesz podjąć się tego zlecenia?",
+        "text": "Wyślij klientowi krótką wiadomość o tym, jak je zrealizujesz.",
+        "button": "Zgłoś się do zlecenia",
+        "message": "Wiadomość do klienta",
+        "placeholder": "Przedstaw się, opisz swoje doświadczenie i to, jak podejdziesz do zlecenia.",
+        "note": "Twoja nazwa i e-mail zostaną udostępnione klientowi.",
+        "send": "Wyślij zgłoszenie"
+      },
+      "errors": {
+        "load": "Nie udało się wczytać zlecenia.",
+        "apply": "Nie udało się wysłać zgłoszenia. Spróbuj ponownie.",
+        "withdraw": "Nie udało się wycofać zgłoszenia. Spróbuj ponownie.",
+        "applications": "Nie udało się wczytać zgłoszeń."
+      }
+    },
     "browse": {
       "title": "Znajdź zlecenia",
       "subtitle": "Otwarte zlecenia dodane przez klientów.",

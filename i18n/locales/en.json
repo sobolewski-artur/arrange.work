@@ -195,6 +195,37 @@
         "delete": "Couldn't delete this job. Please try again."
       }
     },
+    "details": {
+      "title": "Job",
+      "posted": "Posted",
+      "applications": {
+        "title": "Applications",
+        "empty": "No applications yet."
+      },
+      "applied": {
+        "title": "You've applied",
+        "on": "Sent {date}.",
+        "shared": "The client can see your name, email and message."
+      },
+      "withdraw": "Withdraw application",
+      "confirmWithdraw": "Withdraw your application? The client will no longer see it.",
+      "closed": "This job is no longer accepting applications.",
+      "apply": {
+        "title": "Interested in this job?",
+        "text": "Send the client a short message about how you'd do it.",
+        "button": "Apply for this job",
+        "message": "Message to the client",
+        "placeholder": "Introduce yourself, mention relevant experience and how you'd approach the job.",
+        "note": "Your name and email will be shared with the client.",
+        "send": "Send application"
+      },
+      "errors": {
+        "load": "Couldn't load this job.",
+        "apply": "Couldn't send your application. Please try again.",
+        "withdraw": "Couldn't withdraw your application. Please try again.",
+        "applications": "Couldn't load applications."
+      }
+    },
     "browse": {
       "title": "Find work",
       "subtitle": "Open jobs posted by clients.",

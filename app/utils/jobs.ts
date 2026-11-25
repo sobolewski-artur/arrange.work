@@ -129,7 +129,9 @@ export async function updateJob(id: string, job: NewJob) {
   })
 }
 
+/** Deletes a job together with its applications (Firestore doesn't delete subcollections). */
 export async function deleteJob(id: string) {
+  await deleteApplications(id)
   await deleteDoc(doc(jobsCollection(), id))
 }
 
@@ -235,6 +237,20 @@ export async function fetchJobs(
 export async function countJobs(scope: JobScope, tags: string[] = []) {
   const snapshot = await getCountFromServer(jobsQuery(scope, tags))
   return snapshot.data().count
+}
+
+/**
+ * Any job the user may see (open jobs, and their own in any status), or null if it doesn't
+ * exist or they may not see it.
+ */
+export async function fetchJob(id: string) {
+  try {
+    const snapshot = await getDoc(doc(jobsCollection(), id))
+    return snapshot.exists() ? jobFromDoc(snapshot) : null
+  } catch (e) {
+    if ((e as FirebaseError).code === 'permission-denied') return null
+    throw e
+  }
 }
 
 /**

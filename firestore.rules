@@ -50,6 +50,32 @@ service cloud.firestore {
         && request.resource.data.createdAt == resource.data.createdAt
         && isValidJob(request.resource.data);
       allow delete: if isOwner(resource.data.owner);
+
+      // Applications: jobs/{jobId}/applications/{applicantUid}, one per user per job.
+      // Readable by the applicant and the job's owner only.
+      match /applications/{applicantId} {
+        function job() {
+          return get(/databases/$(database)/documents/jobs/$(jobId)).data;
+        }
+
+        // The applicant can check (get) their own application even before it exists.
+        allow get: if isOwner(applicantId) || (isVerified() && job().owner == request.auth.uid);
+        allow list: if isVerified() && job().owner == request.auth.uid;
+        // Apply: verified, to an open job that isn't your own, with your real email.
+        allow create: if isOwner(applicantId)
+          && job().status == 'open'
+          && job().owner != request.auth.uid
+          && request.resource.data.keys().hasOnly(['applicant', 'name', 'email', 'message', 'status', 'createdAt'])
+          && request.resource.data.applicant == applicantId
+          && request.resource.data.email == request.auth.token.email
+          && request.resource.data.name is string && request.resource.data.name.size() <= 100
+          && request.resource.data.message is string
+          && request.resource.data.message.size() > 0 && request.resource.data.message.size() <= 2000
+          && request.resource.data.status == 'pending'
+          && request.resource.data.createdAt == request.time;
+        // Withdraw (applicant) or clean up before deleting the job (owner).
+        allow delete: if isOwner(applicantId) || (isVerified() && job().owner == request.auth.uid);
+      }
     }
   }
 }
