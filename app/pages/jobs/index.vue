@@ -1,141 +1,23 @@
 <script setup lang="ts">
 definePageMeta({ middleware: 'auth', layout: 'site' })
 
-const PAGE_SIZE = 20
-
-const { t, locale } = useI18n()
+const { t } = useI18n()
 const localePath = useLocalePath()
+const route = useRoute()
+const router = useRouter()
 const user = useCurrentUser()
 
 useHead({ title: () => t('jobs.list.title') })
 
-const jobs = shallowRef<Job[]>([])
-const pageIndex = ref(0)
-// cursors[i] is where page i starts (null for the first page). Firestore pages by cursor,
-// so pages are reached one step at a time with Previous / Next.
-const cursors = shallowRef<(JobCursor | null)[]>([null])
-const hasMore = ref(false)
-const total = ref<number | null>(null)
-const loading = ref(true)
-const failed = ref(false)
+const list = useJobList({
+  scope: () => user.value ? { kind: 'mine', user: user.value } : null,
+  // Jobs saved under the old location (users/{uid}/jobs) are moved first.
+  beforeLoad: () => user.value ? ensureLegacyJobsMoved(user.value) : undefined,
+  onReset: () => { confirmingId.value = null }
+})
+const { jobs, pageIndex, loading, failed, filterTags, filterActive, filterDraft, sort } = list
 
 const listTop = ref<HTMLElement | null>(null)
-
-const route = useRoute()
-const router = useRouter()
-
-// --- Tag filter, kept in the URL (?tags=seo,logo) so it survives reloads and Back ---
-
-const filterTags = computed(() => normalizeTags(String(route.query.tags ?? '').split(','), MAX_FILTER_TAGS))
-const filterActive = computed(() => filterTags.value.length > 0)
-/** What the filter box shows; pushed to the URL whenever it changes. */
-const filterDraft = ref<string[]>([...filterTags.value])
-
-watch(filterDraft, (tags) => {
-  if (tags.join(',') === filterTags.value.join(',')) return
-  router.replace({ query: { ...route.query, tags: tags.length ? tags.join(',') : undefined } })
-})
-
-// --- Sort, also kept in the URL (?sort=budgetHigh); "newest" is the default and left out ---
-
-const sort = computed<JobSort>(() => {
-  const value = String(route.query.sort ?? '')
-  return (JOB_SORTS as readonly string[]).includes(value) ? value as JobSort : 'newest'
-})
-const budgetSort = computed(() => sort.value === 'budgetHigh' || sort.value === 'budgetLow')
-
-function setSort(value: string) {
-  router.replace({ query: { ...route.query, sort: value === 'newest' ? undefined : value } })
-}
-
-function toggleFilterTag(tag: string) {
-  filterDraft.value = filterDraft.value.includes(tag)
-    ? filterDraft.value.filter(t => t !== tag)
-    : normalizeTags([...filterDraft.value, tag], MAX_FILTER_TAGS)
-}
-
-// Each load gets a number; a response for an older filter or page is ignored.
-let latestLoad = 0
-
-async function loadPage(index: number) {
-  const u = user.value
-  if (!u) return
-  const load = ++latestLoad
-  loading.value = true
-  failed.value = false
-  try {
-    // Jobs saved under the old location (users/{uid}/jobs) are moved first.
-    await ensureLegacyJobsMoved(u)
-    const page = await fetchMyJobs(u, PAGE_SIZE, cursors.value[index] ?? null, filterTags.value, sort.value)
-    if (load !== latestLoad) return
-    jobs.value = page.jobs
-    hasMore.value = page.hasMore
-    pageIndex.value = index
-    if (page.cursor) {
-      const next = cursors.value.slice(0, index + 1)
-      next[index + 1] = page.cursor
-      cursors.value = next
-    }
-  } catch (e) {
-    if (load !== latestLoad) return
-    console.error(e)
-    failed.value = true
-  } finally {
-    if (load === latestLoad) loading.value = false
-  }
-}
-
-let latestCount = 0
-
-async function loadCount() {
-  const u = user.value
-  if (!u) return
-  const load = ++latestCount
-  try {
-    const count = await countMyJobs(u, filterTags.value)
-    if (load === latestCount) total.value = count
-  } catch (e) {
-    // The count is only for the "1–20 of 57" label; the list works without it.
-    console.warn(e)
-  }
-}
-
-// Load once the signed-in user is known.
-const started = ref(false)
-watch(user, (u) => {
-  if (!u || started.value) return
-  started.value = true
-  loadPage(0)
-  loadCount()
-}, { immediate: true })
-
-// A new filter or sort starts again from the first page.
-watch(() => `${filterTags.value.join(',')}|${sort.value}`, () => {
-  filterDraft.value = [...filterTags.value]
-  if (!started.value) return
-  cursors.value = [null]
-  pageIndex.value = 0
-  total.value = null
-  confirmingId.value = null
-  loadPage(0)
-  loadCount()
-})
-
-async function goTo(index: number) {
-  if (loading.value || index < 0) return
-  await loadPage(index)
-  if (!failed.value) listTop.value?.scrollIntoView({ block: 'start', behavior: 'smooth' })
-}
-
-const pages = computed(() => total.value === null ? null : Math.max(1, Math.ceil(total.value / PAGE_SIZE)))
-const rangeFrom = computed(() => pageIndex.value * PAGE_SIZE + 1)
-const rangeTo = computed(() => pageIndex.value * PAGE_SIZE + jobs.value.length)
-
-const dateFormat = computed(() => new Intl.DateTimeFormat(locale.value, { dateStyle: 'medium' }))
-
-function formatBudget(budget: NonNullable<Job['budget']>) {
-  return new Intl.NumberFormat(locale.value, { style: 'currency', currency: budget.currency, maximumFractionDigits: 0 }).format(budget.amount)
-}
 
 // --- Notices, editing and deleting ---
 
@@ -160,17 +42,14 @@ async function askDelete(job: Job) {
 }
 
 async function confirmDelete(job: Job) {
-  const u = user.value
-  if (!u || deletingId.value) return
+  if (deletingId.value) return
   deletingId.value = job.id
   deleteError.value = null
   try {
     await deleteJob(job.id)
     notice.value = t('jobs.list.deleted', { title: job.title })
     confirmingId.value = null
-    if (total.value !== null) total.value = Math.max(0, total.value - 1)
-    // Reload the page so the next job moves up; step back if this page is now empty.
-    await loadPage(jobs.value.length === 1 && pageIndex.value > 0 ? pageIndex.value - 1 : pageIndex.value)
+    await list.afterRemove()
   } catch (e) {
     console.error(e)
     deleteError.value = { id: job.id, message: t('jobs.list.errors.delete') }
@@ -180,8 +59,8 @@ async function confirmDelete(job: Job) {
 }
 
 const primaryButton = 'inline-flex items-center justify-center rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-on-primary transition hover:bg-primary-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-fg'
+const secondaryButton = 'inline-flex items-center gap-1 rounded-lg bg-surface px-3 py-2 text-sm font-medium ring-1 ring-line-strong transition hover:bg-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-fg'
 const actionButton = 'inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm font-medium text-muted transition hover:bg-hover focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-fg disabled:opacity-50'
-const pageButton = 'inline-flex items-center gap-1 rounded-lg bg-surface px-3 py-2 text-sm font-medium ring-1 ring-line-strong transition hover:bg-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-fg disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-surface'
 </script>
 
 <template>
@@ -199,38 +78,13 @@ const pageButton = 'inline-flex items-center gap-1 rounded-lg bg-surface px-3 py
       </div>
 
       <!-- Tag filter and sort (hidden only while the user has no jobs at all) -->
-      <div v-if="filterActive || jobs.length > 0 || pageIndex > 0" class="mt-8 grid gap-4 sm:grid-cols-[1fr_auto]">
-        <div class="min-w-0">
-          <label for="job-filter" class="block text-sm font-medium">{{ $t('jobs.list.filter.label') }}</label>
-          <div class="mt-1 flex items-start gap-2">
-            <TagInput
-              id="job-filter"
-              v-model="filterDraft"
-              class="min-w-0 flex-1"
-              describedby="job-filter-hint"
-              :max="MAX_FILTER_TAGS"
-              :placeholder="$t('jobs.list.filter.placeholder')"
-              :limit-placeholder="$t('jobs.list.filter.limit')"
-            />
-            <button v-if="filterDraft.length" type="button" :class="[pageButton, 'min-h-10 shrink-0']" @click="filterDraft = []">
-              {{ $t('jobs.list.filter.clear') }}
-            </button>
-          </div>
-          <p id="job-filter-hint" class="mt-1 text-xs text-muted">{{ $t('jobs.list.filter.hint') }}</p>
-        </div>
-        <div>
-          <label for="job-sort" class="block text-sm font-medium">{{ $t('jobs.list.sort.label') }}</label>
-          <select
-            id="job-sort"
-            :value="sort"
-            class="mt-1 block h-10 w-full rounded-lg bg-surface px-3 text-sm ring-1 ring-line-strong focus:outline-2 focus:outline-offset-0 focus:outline-fg sm:w-auto"
-            @change="setSort(($event.target as HTMLSelectElement).value)"
-          >
-            <option v-for="option in JOB_SORTS" :key="option" :value="option">{{ $t(`jobs.list.sort.${option}`) }}</option>
-          </select>
-          <p v-if="budgetSort" class="mt-1 text-xs text-muted sm:max-w-56">{{ $t('jobs.list.sort.budgetNote') }}</p>
-        </div>
-      </div>
+      <JobListControls
+        v-if="filterActive || jobs.length > 0 || pageIndex > 0"
+        v-model:filter="filterDraft"
+        class="mt-8"
+        :sort="sort"
+        @update:sort="list.setSort"
+      />
 
       <p v-if="notice" role="status" class="mt-6 rounded-xl bg-success-soft px-4 py-3 text-sm text-success ring-1 ring-success-line">
         {{ notice }}
@@ -239,26 +93,19 @@ const pageButton = 'inline-flex items-center gap-1 rounded-lg bg-surface px-3 py
       <!-- Error -->
       <div v-if="failed" role="alert" class="mt-8 flex flex-col items-start gap-3 rounded-2xl bg-danger-soft p-5 text-sm text-danger ring-1 ring-danger-line sm:flex-row sm:items-center sm:justify-between">
         {{ $t('jobs.list.errors.load') }}
-        <button type="button" :class="pageButton" class="text-fg" @click="loadPage(pageIndex)">
+        <button type="button" :class="secondaryButton" class="text-fg" @click="list.loadPage(pageIndex)">
           {{ $t('jobs.list.errors.retry') }}
         </button>
       </div>
 
       <!-- First load -->
-      <ul v-else-if="loading && jobs.length === 0" class="mt-8 space-y-3" aria-busy="true">
-        <li v-for="n in 3" :key="n" class="animate-pulse rounded-2xl bg-surface p-5 ring-1 ring-line">
-          <div class="h-4 w-28 rounded bg-well" />
-          <div class="mt-4 h-5 w-2/3 rounded bg-well" />
-          <div class="mt-3 h-4 w-full rounded bg-well" />
-          <div class="mt-2 h-4 w-1/2 rounded bg-well" />
-        </li>
-      </ul>
+      <JobListSkeleton v-else-if="loading && jobs.length === 0" class="mt-8" />
 
       <!-- Nothing matches the filter -->
       <div v-else-if="jobs.length === 0 && filterActive" class="mt-8 rounded-2xl bg-surface px-6 py-14 text-center ring-1 ring-line">
         <h2 class="text-lg font-semibold">{{ $t('jobs.list.filter.empty.title') }}</h2>
         <p class="mt-1 text-sm text-muted">{{ $t('jobs.list.filter.empty.text') }}</p>
-        <button type="button" :class="[pageButton, 'mt-6']" @click="filterDraft = []">{{ $t('jobs.list.filter.clear') }}</button>
+        <button type="button" :class="[secondaryButton, 'mt-6']" @click="filterDraft = []">{{ $t('jobs.list.filter.clear') }}</button>
       </div>
 
       <!-- Empty -->
@@ -277,43 +124,14 @@ const pageButton = 'inline-flex items-center gap-1 rounded-lg bg-surface px-3 py
       <!-- List -->
       <template v-else>
         <ul class="mt-8 space-y-3 transition-opacity" :class="loading && 'opacity-60'" :aria-busy="loading">
-          <li v-for="job in jobs" :key="job.id" class="rounded-2xl bg-surface p-5 shadow-sm ring-1 ring-line sm:p-6">
-            <div class="flex items-start justify-between gap-3">
-              <ul v-if="job.tags.length" class="flex min-w-0 flex-wrap gap-1.5" :aria-label="$t('jobs.new.fields.tags')">
-                <li v-for="tag in job.tags" :key="tag" class="min-w-0 max-w-full">
-                  <!-- Clicking a tag adds it to (or removes it from) the filter. -->
-                  <button
-                    type="button"
-                    class="max-w-full truncate rounded-full px-2.5 py-0.5 text-xs font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-fg"
-                    :class="filterTags.includes(tag) ? 'bg-primary text-on-primary' : 'bg-well text-muted hover:bg-hover hover:text-fg'"
-                    :aria-pressed="filterTags.includes(tag)"
-                    :title="$t('jobs.list.filter.byTag', { tag })"
-                    @click="toggleFilterTag(tag)"
-                  >
-                    {{ tag }}
-                  </button>
-                </li>
-              </ul>
-              <span class="ml-auto shrink-0 rounded-full bg-success-soft px-2.5 py-0.5 text-xs font-medium text-success ring-1 ring-success-line">
-                {{ $t(`jobs.list.status.${job.status}`) }}
-              </span>
-            </div>
-            <h2 class="mt-3 text-lg font-semibold break-words">{{ job.title }}</h2>
-            <p class="mt-1 line-clamp-2 text-sm break-words whitespace-pre-line text-muted">{{ job.description }}</p>
-            <div class="mt-4 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-              <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
-                <span class="font-medium">{{ job.budget ? formatBudget(job.budget) : $t('jobs.list.noBudget') }}</span>
-                <span v-if="job.location" class="inline-flex items-center gap-1 text-muted">
-                  <svg class="size-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                    <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
-                    <circle cx="12" cy="10" r="3" />
-                  </svg>
-                  {{ job.location.city ? `${job.location.city} · ` : '' }}{{ $t(`jobs.location.${job.location.mode}`) }}
-                </span>
-                <span v-if="job.createdAt" class="text-subtle">
-                  {{ $t('jobs.list.posted', { date: dateFormat.format(job.createdAt) }) }}
-                </span>
-              </div>
+          <JobCard
+            v-for="job in jobs"
+            :key="job.id"
+            :job="job"
+            :active-tags="filterTags"
+            @toggle-tag="list.toggleFilterTag"
+          >
+            <template #actions>
               <div v-if="confirmingId !== job.id" class="-mr-2.5 flex gap-1">
                 <NuxtLink
                   :to="localePath(`/jobs/${job.id}/edit`)"
@@ -339,64 +157,53 @@ const pageButton = 'inline-flex items-center gap-1 rounded-lg bg-surface px-3 py
                   {{ $t('jobs.list.delete') }}
                 </button>
               </div>
-            </div>
+            </template>
 
             <!-- Inline delete confirmation -->
-            <div
-              v-if="confirmingId === job.id"
-              class="mt-4 flex flex-col gap-3 rounded-xl bg-danger-soft p-3 ring-1 ring-danger-line sm:flex-row sm:items-center sm:justify-between"
-            >
-              <p class="text-sm text-danger">
-                {{ deleteError?.id === job.id ? deleteError.message : $t('jobs.list.confirmDelete') }}
-              </p>
-              <div class="flex shrink-0 gap-2">
-                <button
-                  :id="`cancel-delete-${job.id}`"
-                  type="button"
-                  class="rounded-lg bg-surface px-3 py-1.5 text-sm font-medium ring-1 ring-line-strong transition hover:bg-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-fg disabled:opacity-60"
-                  :disabled="deletingId === job.id"
-                  @click="confirmingId = null"
-                >
-                  {{ $t('account.cancel') }}
-                </button>
-                <button
-                  type="button"
-                  class="rounded-lg bg-danger px-3 py-1.5 text-sm font-medium text-page transition hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-fg disabled:opacity-60"
-                  :disabled="deletingId === job.id"
-                  @click="confirmDelete(job)"
-                >
-                  {{ deletingId === job.id ? $t('auth.pending') : $t('jobs.list.delete') }}
-                </button>
+            <template #footer>
+              <div
+                v-if="confirmingId === job.id"
+                class="mt-4 flex flex-col gap-3 rounded-xl bg-danger-soft p-3 ring-1 ring-danger-line sm:flex-row sm:items-center sm:justify-between"
+              >
+                <p class="text-sm text-danger">
+                  {{ deleteError?.id === job.id ? deleteError.message : $t('jobs.list.confirmDelete') }}
+                </p>
+                <div class="flex shrink-0 gap-2">
+                  <button
+                    :id="`cancel-delete-${job.id}`"
+                    type="button"
+                    class="rounded-lg bg-surface px-3 py-1.5 text-sm font-medium ring-1 ring-line-strong transition hover:bg-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-fg disabled:opacity-60"
+                    :disabled="deletingId === job.id"
+                    @click="confirmingId = null"
+                  >
+                    {{ $t('account.cancel') }}
+                  </button>
+                  <button
+                    type="button"
+                    class="rounded-lg bg-danger px-3 py-1.5 text-sm font-medium text-page transition hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-fg disabled:opacity-60"
+                    :disabled="deletingId === job.id"
+                    @click="confirmDelete(job)"
+                  >
+                    {{ deletingId === job.id ? $t('auth.pending') : $t('jobs.list.delete') }}
+                  </button>
+                </div>
               </div>
-            </div>
-          </li>
+            </template>
+          </JobCard>
         </ul>
 
-        <!-- Pagination (only when there is more than one page) -->
-        <nav
-          v-if="pageIndex > 0 || hasMore"
-          :aria-label="$t('jobs.list.pagination')"
-          class="mt-8 flex items-center justify-between gap-4"
-        >
-          <p class="text-sm text-muted" aria-live="polite">
-            <template v-if="total !== null">{{ $t('jobs.list.range', { from: rangeFrom, to: rangeTo, total }) }}</template>
-            <span v-if="pages" class="hidden sm:inline"> · {{ $t('jobs.list.page', { page: pageIndex + 1, pages }) }}</span>
-          </p>
-          <div class="flex gap-2">
-            <button type="button" :class="pageButton" :disabled="loading || pageIndex === 0" @click="goTo(pageIndex - 1)">
-              <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <path d="m15 18-6-6 6-6" />
-              </svg>
-              {{ $t('jobs.list.previous') }}
-            </button>
-            <button type="button" :class="pageButton" :disabled="loading || !hasMore" @click="goTo(pageIndex + 1)">
-              {{ $t('jobs.list.next') }}
-              <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <path d="m9 18 6-6-6-6" />
-              </svg>
-            </button>
-          </div>
-        </nav>
+        <JobPagination
+          class="mt-8"
+          :page-index="pageIndex"
+          :has-more="list.hasMore.value"
+          :loading="loading"
+          :total="list.total.value"
+          :pages="list.pages.value"
+          :range-from="list.rangeFrom.value"
+          :range-to="list.rangeTo.value"
+          @previous="list.goTo(pageIndex - 1, listTop)"
+          @next="list.goTo(pageIndex + 1, listTop)"
+        />
       </template>
     </template>
   </div>

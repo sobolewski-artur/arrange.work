@@ -33,12 +33,17 @@ service cloud.firestore {
     }
 
     // Jobs: one top-level collection, each job with an `owner` field holding the poster's uid.
-    // For now only the owner can see, change or delete a job.
+    // Any verified user can read open jobs ("Find work"); the owner can also read their own
+    // jobs in any status. Only the owner can change or delete a job.
+    function canReadJob(job) {
+      return job.owner == request.auth.uid || job.status == 'open';
+    }
+
     match /jobs/{jobId} {
       // `resource == null`: reading a job that doesn't exist just reports it missing.
-      allow get: if isVerified() && (resource == null || resource.data.owner == request.auth.uid);
-      // Listing is only allowed for queries filtered to owner == your own uid.
-      allow list: if isVerified() && resource.data.owner == request.auth.uid;
+      allow get: if isVerified() && (resource == null || canReadJob(resource.data));
+      // Listing is only allowed for queries filtered to owner == your uid or status == 'open'.
+      allow list: if isVerified() && canReadJob(resource.data);
       allow create: if isOwner(request.resource.data.owner) && isValidJob(request.resource.data);
       allow update: if isOwner(resource.data.owner)
         && request.resource.data.owner == resource.data.owner

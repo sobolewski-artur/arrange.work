@@ -6,6 +6,7 @@
     "howItWorks": "How it works",
     "about": "About",
     "account": "Account",
+    "findWork": "Find work",
     "myJobs": "My jobs",
     "menu": "Menu",
     "openMenu": "Open menu",
@@ -153,6 +154,8 @@
         "open": "Open"
       },
       "noBudget": "No budget given",
+      "showMore": "Show more",
+      "showLess": "Show less",
       "posted": "Posted {date}",
       "filter": {
         "label": "Filter by tags",
@@ -190,6 +193,18 @@
         "load": "Couldn't load your jobs.",
         "retry": "Try again",
         "delete": "Couldn't delete this job. Please try again."
+      }
+    },
+    "browse": {
+      "title": "Find work",
+      "subtitle": "Open jobs posted by clients.",
+      "yourJob": "Your job",
+      "empty": {
+        "title": "No open jobs yet",
+        "text": "New jobs appear here as soon as clients post them."
+      },
+      "errors": {
+        "load": "Couldn't load jobs."
       }
     },
     "edit": {

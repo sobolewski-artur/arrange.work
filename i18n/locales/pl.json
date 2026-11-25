@@ -6,6 +6,7 @@
     "howItWorks": "Jak to działa",
     "about": "O nas",
     "account": "Konto",
+    "findWork": "Znajdź zlecenia",
     "myJobs": "Moje zlecenia",
     "menu": "Menu",
     "openMenu": "Otwórz menu",
@@ -153,6 +154,8 @@
         "open": "Otwarte"
       },
       "noBudget": "Bez podanego budżetu",
+      "showMore": "Pokaż więcej",
+      "showLess": "Pokaż mniej",
       "posted": "Dodano {date}",
       "filter": {
         "label": "Filtruj po tagach",
@@ -190,6 +193,18 @@
         "load": "Nie udało się wczytać zleceń.",
         "retry": "Spróbuj ponownie",
         "delete": "Nie udało się usunąć zlecenia. Spróbuj ponownie."
+      }
+    },
+    "browse": {
+      "title": "Znajdź zlecenia",
+      "subtitle": "Otwarte zlecenia dodane przez klientów.",
+      "yourJob": "Twoje zlecenie",
+      "empty": {
+        "title": "Brak otwartych zleceń",
+        "text": "Nowe zlecenia pojawią się tutaj, gdy tylko klienci je dodadzą."
+      },
+      "errors": {
+        "load": "Nie udało się wczytać zleceń."
       }
     },
     "edit": {

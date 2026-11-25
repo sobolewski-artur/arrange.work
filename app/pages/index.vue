@@ -22,10 +22,15 @@ const heroPoints = ['describe', 'compare', 'together'] as const
 
 const steps = ['describe', 'compare', 'hire'] as const
 
-// `to: null` hides the panel's button (the specialists one for signed-in users).
 const audiences = computed(() => [
   { key: 'clients', points: ['find', 'rates', 'organized'], to: startLink.value.to, cta: startLink.value.label },
-  { key: 'specialists', points: ['profile', 'projects', 'terms'], to: user.value ? null : signUpPath.value, cta: t('home.cta.join') }
+  // Signed-in users go straight to the open jobs.
+  {
+    key: 'specialists',
+    points: ['profile', 'projects', 'terms'],
+    to: user.value ? localePath('/find-work') : signUpPath.value,
+    cta: user.value ? t('nav.findWork') : t('home.cta.join')
+  }
 ] as const)
 
 const primaryButton = 'inline-flex items-center justify-center rounded-lg bg-primary px-5 py-3 text-sm font-medium text-on-primary shadow-sm transition hover:bg-primary-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-fg'

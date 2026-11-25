@@ -70,7 +70,8 @@ export type JobCursor = QueryDocumentSnapshot
 
 /**
  * All jobs live in the top-level `jobs` collection; each has an `owner` field with the uid of
- * the user who posted it. firestore.rules lets only the owner read, change or delete a job.
+ * the user who posted it. firestore.rules lets any verified user read open jobs, and only the
+ * owner change or delete a job (or read it once it's no longer open).
  */
 function jobsCollection() {
   return collection(useFirestore(), 'jobs')
@@ -192,31 +193,36 @@ function jobFromDoc(snapshot: DocumentSnapshot): Job {
 }
 
 /**
- * The user's jobs, optionally only those with any of `tags`. The `owner` filter is required:
- * the security rules only allow listing your own jobs. Each query shape needs a composite
- * index from firestore.indexes.json.
+ * Which jobs a list shows: the user's own jobs (any status), or every open job. The rules only
+ * allow listing with one of these two filters, so every list query starts with one of them.
  */
-function myJobsQuery(user: User, tags: string[]) {
-  const mine = where('owner', '==', user.uid)
+export type JobScope = { kind: 'mine', user: User } | { kind: 'open' }
+
+/**
+ * Jobs in `scope`, optionally only those with any of `tags`. Each combination of scope, tag
+ * filter and sort needs a composite index from firestore.indexes.json.
+ */
+function jobsQuery(scope: JobScope, tags: string[]) {
+  const scoped = scope.kind === 'mine' ? where('owner', '==', scope.user.uid) : where('status', '==', 'open')
   return tags.length
-    ? query(jobsCollection(), mine, where('tags', 'array-contains-any', tags))
-    : query(jobsCollection(), mine)
+    ? query(jobsCollection(), scoped, where('tags', 'array-contains-any', tags))
+    : query(jobsCollection(), scoped)
 }
 
 /**
- * One page of the user's jobs in `sort` order, optionally only those with any of `tags`.
- * Pass the previous page's `cursor` as `after` for the next page (with the same tags and
- * sort). Fetches one extra document to know whether another page exists.
+ * One page of jobs in `scope`, in `sort` order, optionally only those with any of `tags`.
+ * Pass the previous page's `cursor` as `after` for the next page (with the same scope, tags
+ * and sort). Fetches one extra document to know whether another page exists.
  */
-export async function fetchMyJobs(
-  user: User,
+export async function fetchJobs(
+  scope: JobScope,
   pageSize: number,
   after: JobCursor | null = null,
   tags: string[] = [],
   sort: JobSort = 'newest'
 ) {
   const snapshot = await getDocs(query(
-    myJobsQuery(user, tags),
+    jobsQuery(scope, tags),
     ...SORT_ORDER[sort].map(([field, direction]) => orderBy(field, direction)),
     ...(after ? [startAfter(after)] : []),
     limit(pageSize + 1)
@@ -225,9 +231,9 @@ export async function fetchMyJobs(
   return { jobs: docs.map(jobFromDoc), cursor: docs.at(-1) ?? null, hasMore: snapshot.size > pageSize }
 }
 
-/** Number of the user's jobs, optionally only those with any of `tags` (one cheap aggregation query). */
-export async function countMyJobs(user: User, tags: string[] = []) {
-  const snapshot = await getCountFromServer(myJobsQuery(user, tags))
+/** Number of jobs in `scope`, optionally only those with any of `tags` (one cheap aggregation query). */
+export async function countJobs(scope: JobScope, tags: string[] = []) {
+  const snapshot = await getCountFromServer(jobsQuery(scope, tags))
   return snapshot.data().count
 }
 

@@ -11,6 +11,7 @@ const links = computed(() => [
   { to: localePath('/about'), label: t('nav.about') },
   ...(user.value
     ? [
+        { to: localePath('/find-work'), label: t('nav.findWork') },
         { to: localePath('/jobs'), label: t('nav.myJobs') },
         { to: localePath('/jobs/new'), label: t('home.cta.postJob') }
       ]
