@@ -39,7 +39,7 @@
     },
     "cta": {
       "start": "Znajdź specjalistę",
-      "account": "Przejdź do konta",
+      "postJob": "Dodaj zlecenie",
       "howItWorks": "Zobacz, jak to działa",
       "join": "Dołącz jako specjalista"
     },
@@ -89,6 +89,34 @@
     "final": {
       "title": "Zaczynamy?",
       "text": "Załóż darmowe konto i znajdź specjalistę, którego potrzebuje Twój projekt."
+    }
+  },
+  "jobs": {
+    "new": {
+      "title": "Dodaj zlecenie",
+      "subtitle": "Opisz, co trzeba zrobić. Im więcej szczegółów, tym łatwiej znaleźć odpowiedniego specjalistę.",
+      "fields": {
+        "title": "Tytuł zlecenia",
+        "titlePlaceholder": "np. Strona internetowa dla mojej piekarni",
+        "category": "Kategoria",
+        "categoryPlaceholder": "Wybierz kategorię",
+        "description": "Opis",
+        "descriptionPlaceholder": "Co trzeba zrobić, co już masz i jak ma wyglądać efekt końcowy.",
+        "budget": "Budżet",
+        "budgetAmount": "Kwota budżetu",
+        "currency": "Waluta",
+        "optional": "opcjonalnie"
+      },
+      "submit": "Opublikuj zlecenie",
+      "posted": {
+        "title": "Zlecenie zostało dodane",
+        "text": "Zapisaliśmy „{title}”.",
+        "another": "Dodaj kolejne zlecenie",
+        "home": "Wróć na stronę główną"
+      },
+      "errors": {
+        "failed": "Nie udało się dodać zlecenia. Spróbuj ponownie."
+      }
     }
   },
   "about": {

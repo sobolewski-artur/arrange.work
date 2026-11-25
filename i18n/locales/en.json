@@ -39,7 +39,7 @@
     },
     "cta": {
       "start": "Find a specialist",
-      "account": "Go to your account",
+      "postJob": "Post a job",
       "howItWorks": "See how it works",
       "join": "Join as a specialist"
     },
@@ -89,6 +89,34 @@
     "final": {
       "title": "Ready to get started?",
       "text": "Create a free account and find the specialist your project needs."
+    }
+  },
+  "jobs": {
+    "new": {
+      "title": "Post a job",
+      "subtitle": "Describe what you need done. The clearer the details, the easier it is to find the right specialist.",
+      "fields": {
+        "title": "Job title",
+        "titlePlaceholder": "e.g. Build a website for my bakery",
+        "category": "Category",
+        "categoryPlaceholder": "Choose a category",
+        "description": "Description",
+        "descriptionPlaceholder": "What needs to be done, what you already have and what the result should look like.",
+        "budget": "Budget",
+        "budgetAmount": "Budget amount",
+        "currency": "Currency",
+        "optional": "optional"
+      },
+      "submit": "Post job",
+      "posted": {
+        "title": "Your job has been posted",
+        "text": "We have saved “{title}”.",
+        "another": "Post another job",
+        "home": "Back to home"
+      },
+      "errors": {
+        "failed": "Couldn't post your job. Please try again."
+      }
     }
   },
   "about": {

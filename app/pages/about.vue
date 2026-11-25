@@ -13,7 +13,7 @@ useSeoMeta({
 })
 
 const startLink = computed(() => user.value
-  ? { to: localePath('/account'), label: t('home.cta.account') }
+  ? { to: localePath('/jobs/new'), label: t('home.cta.postJob') }
   : { to: localePath({ path: '/login', query: { mode: 'signup' } }), label: t('home.cta.start') })
 
 const values = ['clarity', 'trust', 'fairness', 'simplicity'] as const

@@ -13,36 +13,20 @@ useSeoMeta({
 })
 
 const signUpPath = computed(() => localePath({ path: '/login', query: { mode: 'signup' } }))
-// Signed-in users already have an account, so the main call to action takes them there instead.
+// Signed-in users already have an account, so the main call to action is posting a job.
 const startLink = computed(() => user.value
-  ? { to: localePath('/account'), label: t('home.cta.account') }
+  ? { to: localePath('/jobs/new'), label: t('home.cta.postJob') }
   : { to: signUpPath.value, label: t('home.cta.start') })
 
 const heroPoints = ['describe', 'compare', 'together'] as const
 
-// Inner SVG markup (24×24, stroked) per category; static and trusted.
-const categories = [
-  { key: 'development', icon: '<path d="m8 9-4 3 4 3M16 9l4 3-4 3M14 5l-4 14"/>' },
-  { key: 'design', icon: '<path d="m12 19 7-7 3 3-7 7-3-3Z"/><path d="m18 13-1.5-7.5L2 2l3.5 14.5L13 18l5-5Z"/><path d="m2 2 7.6 7.6"/><circle cx="11" cy="11" r="2"/>' },
-  { key: 'marketing', icon: '<path d="M3 11v2a1 1 0 0 0 1 1h2l5 4V6L6 10H4a1 1 0 0 0-1 1Z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/>' },
-  { key: 'writing', icon: '<path d="M4 20h16"/><path d="M4 16 14 6l4 4L8 20H4v-4Z"/>' },
-  { key: 'finance', icon: '<path d="M3 3v18h18"/><path d="m7 15 4-4 3 3 5-6"/>' },
-  { key: 'legal', icon: '<path d="M12 3v18M7 21h10M5 7h14"/><path d="m5 7-3 7a3 3 0 0 0 6 0L5 7ZM19 7l-3 7a3 3 0 0 0 6 0l-3-7Z"/>' },
-  { key: 'data', icon: '<ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5"/><path d="M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/>' },
-  { key: 'consulting', icon: '<rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 13h18"/>' }
-] as const
-
 const steps = ['describe', 'compare', 'hire'] as const
 
-const audiences = [
-  { key: 'clients', points: ['find', 'rates', 'organized'], to: () => startLink.value.to, cta: () => startLink.value.label },
-  {
-    key: 'specialists',
-    points: ['profile', 'projects', 'terms'],
-    to: () => user.value ? startLink.value.to : signUpPath.value,
-    cta: () => user.value ? startLink.value.label : t('home.cta.join')
-  }
-] as const
+// `to: null` hides the panel's button (the specialists one for signed-in users).
+const audiences = computed(() => [
+  { key: 'clients', points: ['find', 'rates', 'organized'], to: startLink.value.to, cta: startLink.value.label },
+  { key: 'specialists', points: ['profile', 'projects', 'terms'], to: user.value ? null : signUpPath.value, cta: t('home.cta.join') }
+] as const)
 
 const primaryButton = 'inline-flex items-center justify-center rounded-lg bg-primary px-5 py-3 text-sm font-medium text-on-primary shadow-sm transition hover:bg-primary-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-fg'
 const secondaryButton = 'inline-flex items-center justify-center rounded-lg bg-surface px-5 py-3 text-sm font-medium ring-1 ring-line-strong transition hover:bg-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-fg'
@@ -96,7 +80,7 @@ const secondaryButton = 'inline-flex items-center justify-center rounded-lg bg-s
       </div>
       <ul class="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <li
-          v-for="category in categories"
+          v-for="category in CATEGORIES"
           :key="category.key"
           class="rounded-2xl bg-surface p-6 shadow-sm ring-1 ring-line"
         >
@@ -150,13 +134,14 @@ const secondaryButton = 'inline-flex items-center justify-center rounded-lg bg-s
             </li>
           </ul>
           <NuxtLink
-            :to="audience.to()"
+            v-if="audience.to"
+            :to="audience.to"
             class="mt-8 self-start"
             :class="i === 0
               ? primaryButton
               : 'inline-flex items-center justify-center rounded-lg bg-on-primary px-5 py-3 text-sm font-medium text-primary transition hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-on-primary'"
           >
-            {{ audience.cta() }}
+            {{ audience.cta }}
           </NuxtLink>
         </div>
       </div>
