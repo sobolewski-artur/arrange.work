@@ -5,7 +5,10 @@
     "home": "Strona główna",
     "howItWorks": "Jak to działa",
     "about": "O nas",
-    "account": "Konto"
+    "account": "Konto",
+    "menu": "Menu",
+    "openMenu": "Otwórz menu",
+    "closeMenu": "Zamknij menu"
   },
   "photos": {
     "credit": "Zdjęcie:",
