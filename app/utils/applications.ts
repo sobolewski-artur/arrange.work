@@ -60,10 +60,15 @@ function applicationFromData(data: DocumentData): Application {
   }
 }
 
-/** Applies to a job as `user`, sharing their display name (or email) and email with the owner. */
-export async function applyToJob(user: User, jobId: string, message: string) {
-  await setDoc(doc(applicationsCollection(jobId), user.uid), {
+/**
+ * Applies to a job as `user`, sharing their display name (or email) and email with the owner.
+ * The job's owner and title are copied in so the owner's notifications can find and describe it.
+ */
+export async function applyToJob(user: User, job: Pick<Job, 'id' | 'owner' | 'title'>, message: string) {
+  await setDoc(doc(applicationsCollection(job.id), user.uid), {
     applicant: user.uid,
+    jobOwner: job.owner,
+    jobTitle: job.title,
     name: user.displayName || user.email || '',
     email: user.email ?? '',
     message,

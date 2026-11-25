@@ -18,5 +18,19 @@ export function useJobFormat() {
     return dateFormat.value.format(date)
   }
 
-  return { formatBudget, formatLocation, formatDate }
+  const relativeFormat = computed(() => new Intl.RelativeTimeFormat(locale.value, { numeric: 'auto' }))
+  const UNITS: [Intl.RelativeTimeFormatUnit, number][] = [
+    ['year', 31_536_000], ['month', 2_592_000], ['week', 604_800], ['day', 86_400], ['hour', 3_600], ['minute', 60]
+  ]
+
+  /** "5 minutes ago", "yesterday", "now"… */
+  function formatRelative(date: Date) {
+    const seconds = (date.getTime() - Date.now()) / 1000
+    for (const [unit, size] of UNITS) {
+      if (Math.abs(seconds) >= size) return relativeFormat.value.format(Math.round(seconds / size), unit)
+    }
+    return relativeFormat.value.format(0, 'second')
+  }
+
+  return { formatBudget, formatLocation, formatDate, formatRelative }
 }

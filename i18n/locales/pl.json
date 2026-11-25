@@ -301,6 +301,15 @@
       "load": "Nie udało się wczytać zgłoszeń."
     }
   },
+  "notifications": {
+    "title": "Powiadomienia",
+    "label": "Powiadomienia",
+    "labelUnread": "Powiadomienia, nieprzeczytane: {count}",
+    "empty": "Brak powiadomień. Tutaj zobaczysz nowe zgłoszenia do Twoich zleceń.",
+    "error": "Nie udało się wczytać powiadomień.",
+    "applied": "{name} zgłasza się do zlecenia {job}",
+    "unread": "Nieprzeczytane"
+  },
   "about": {
     "meta": {
       "title": "O nas",

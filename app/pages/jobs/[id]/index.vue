@@ -113,7 +113,7 @@ async function apply() {
   sending.value = true
   applyError.value = null
   try {
-    await applyToJob(u, job.value.id, message.value.trim())
+    await applyToJob(u, job.value, message.value.trim())
     myApplication.value = await fetchMyApplication(u, job.value.id)
     formOpen.value = false
     message.value = ''

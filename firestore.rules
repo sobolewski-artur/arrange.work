@@ -32,10 +32,12 @@ service cloud.firestore {
         && job.status == 'open';
     }
 
-    // "My applications": collection-group queries over every job's applications, allowed only
-    // when filtered to your own (applicant == your uid). Per-job access is in /jobs below.
+    // Collection-group queries over every job's applications, allowed only when filtered to
+    // your own applications ("My applications": applicant == your uid) or to applications to
+    // your jobs (notifications: jobOwner == your uid). Per-job access is in /jobs below.
     match /{path=**}/applications/{applicationId} {
-      allow list: if isVerified() && resource.data.applicant == request.auth.uid;
+      allow list: if isVerified()
+        && (resource.data.applicant == request.auth.uid || resource.data.jobOwner == request.auth.uid);
     }
 
     // Jobs: one top-level collection, each job with an `owner` field holding the poster's uid.
@@ -71,8 +73,11 @@ service cloud.firestore {
         allow create: if isOwner(applicantId)
           && job().status == 'open'
           && job().owner != request.auth.uid
-          && request.resource.data.keys().hasOnly(['applicant', 'name', 'email', 'message', 'status', 'createdAt'])
+          && request.resource.data.keys().hasOnly(['applicant', 'jobOwner', 'jobTitle', 'name', 'email', 'message', 'status', 'createdAt'])
           && request.resource.data.applicant == applicantId
+          // Copied from the job so the owner's notifications can find and describe it.
+          && request.resource.data.jobOwner == job().owner
+          && request.resource.data.jobTitle == job().title
           && request.resource.data.email == request.auth.token.email
           && request.resource.data.name is string && request.resource.data.name.size() <= 100
           && request.resource.data.message is string

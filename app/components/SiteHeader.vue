@@ -85,6 +85,8 @@ const menuLink = 'block rounded-lg px-3 py-2.5 text-base font-medium transition-
           <ThemeToggle />
         </div>
 
+        <NotificationBell v-if="user" />
+
         <!-- Auth state only exists in the browser; keep the space reserved until it resolves. -->
         <NuxtLink
           v-if="user"

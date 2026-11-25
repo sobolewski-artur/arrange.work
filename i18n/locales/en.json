@@ -301,6 +301,15 @@
       "load": "Couldn't load your applications."
     }
   },
+  "notifications": {
+    "title": "Notifications",
+    "label": "Notifications",
+    "labelUnread": "Notifications, {count} unread",
+    "empty": "No notifications yet. You'll see new applications to your jobs here.",
+    "error": "Couldn't load notifications.",
+    "applied": "{name} applied to {job}",
+    "unread": "Unread"
+  },
   "about": {
     "meta": {
       "title": "About",
