@@ -144,7 +144,7 @@
     },
     "list": {
       "title": "Moje zlecenia",
-      "subtitle": "Twoje dodane zlecenia, od najnowszych.",
+      "subtitle": "Twoje dodane zlecenia.",
       "empty": {
         "title": "Brak zleceń",
         "text": "Dodaj pierwsze zlecenie i opisz, co trzeba zrobić."
@@ -165,6 +165,14 @@
           "title": "Brak zleceń z tymi tagami",
           "text": "Spróbuj innych tagów lub wyczyść filtr."
         }
+      },
+      "sort": {
+        "label": "Sortuj",
+        "newest": "Od najnowszych",
+        "oldest": "Od najstarszych",
+        "budgetHigh": "Budżet: od najwyższego",
+        "budgetLow": "Budżet: od najniższego",
+        "budgetNote": "Zlecenia bez budżetu są na końcu. Różne waluty są porównywane tylko po kwocie."
       },
       "pagination": "Stronicowanie",
       "range": "{from}–{to} z {total}",

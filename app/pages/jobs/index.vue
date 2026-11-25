@@ -36,6 +36,18 @@ watch(filterDraft, (tags) => {
   router.replace({ query: { ...route.query, tags: tags.length ? tags.join(',') : undefined } })
 })
 
+// --- Sort, also kept in the URL (?sort=budgetHigh); "newest" is the default and left out ---
+
+const sort = computed<JobSort>(() => {
+  const value = String(route.query.sort ?? '')
+  return (JOB_SORTS as readonly string[]).includes(value) ? value as JobSort : 'newest'
+})
+const budgetSort = computed(() => sort.value === 'budgetHigh' || sort.value === 'budgetLow')
+
+function setSort(value: string) {
+  router.replace({ query: { ...route.query, sort: value === 'newest' ? undefined : value } })
+}
+
 function toggleFilterTag(tag: string) {
   filterDraft.value = filterDraft.value.includes(tag)
     ? filterDraft.value.filter(t => t !== tag)
@@ -52,7 +64,9 @@ async function loadPage(index: number) {
   loading.value = true
   failed.value = false
   try {
-    const page = await fetchMyJobs(u, PAGE_SIZE, cursors.value[index] ?? null, filterTags.value)
+    // Jobs saved under the old location (users/{uid}/jobs) are moved first.
+    await ensureLegacyJobsMoved(u)
+    const page = await fetchMyJobs(u, PAGE_SIZE, cursors.value[index] ?? null, filterTags.value, sort.value)
     if (load !== latestLoad) return
     jobs.value = page.jobs
     hasMore.value = page.hasMore
@@ -95,8 +109,8 @@ watch(user, (u) => {
   loadCount()
 }, { immediate: true })
 
-// A new filter starts again from the first page.
-watch(() => filterTags.value.join(','), () => {
+// A new filter or sort starts again from the first page.
+watch(() => `${filterTags.value.join(',')}|${sort.value}`, () => {
   filterDraft.value = [...filterTags.value]
   if (!started.value) return
   cursors.value = [null]
@@ -151,7 +165,7 @@ async function confirmDelete(job: Job) {
   deletingId.value = job.id
   deleteError.value = null
   try {
-    await deleteJob(u, job.id)
+    await deleteJob(job.id)
     notice.value = t('jobs.list.deleted', { title: job.title })
     confirmingId.value = null
     if (total.value !== null) total.value = Math.max(0, total.value - 1)
@@ -184,24 +198,38 @@ const pageButton = 'inline-flex items-center gap-1 rounded-lg bg-surface px-3 py
         </NuxtLink>
       </div>
 
-      <!-- Tag filter (hidden only while the user has no jobs at all) -->
-      <div v-if="filterActive || jobs.length > 0 || pageIndex > 0" class="mt-8">
-        <label for="job-filter" class="block text-sm font-medium">{{ $t('jobs.list.filter.label') }}</label>
-        <div class="mt-1 flex items-start gap-2">
-          <TagInput
-            id="job-filter"
-            v-model="filterDraft"
-            class="min-w-0 flex-1"
-            describedby="job-filter-hint"
-            :max="MAX_FILTER_TAGS"
-            :placeholder="$t('jobs.list.filter.placeholder')"
-            :limit-placeholder="$t('jobs.list.filter.limit')"
-          />
-          <button v-if="filterDraft.length" type="button" :class="[pageButton, 'min-h-10 shrink-0']" @click="filterDraft = []">
-            {{ $t('jobs.list.filter.clear') }}
-          </button>
+      <!-- Tag filter and sort (hidden only while the user has no jobs at all) -->
+      <div v-if="filterActive || jobs.length > 0 || pageIndex > 0" class="mt-8 grid gap-4 sm:grid-cols-[1fr_auto]">
+        <div class="min-w-0">
+          <label for="job-filter" class="block text-sm font-medium">{{ $t('jobs.list.filter.label') }}</label>
+          <div class="mt-1 flex items-start gap-2">
+            <TagInput
+              id="job-filter"
+              v-model="filterDraft"
+              class="min-w-0 flex-1"
+              describedby="job-filter-hint"
+              :max="MAX_FILTER_TAGS"
+              :placeholder="$t('jobs.list.filter.placeholder')"
+              :limit-placeholder="$t('jobs.list.filter.limit')"
+            />
+            <button v-if="filterDraft.length" type="button" :class="[pageButton, 'min-h-10 shrink-0']" @click="filterDraft = []">
+              {{ $t('jobs.list.filter.clear') }}
+            </button>
+          </div>
+          <p id="job-filter-hint" class="mt-1 text-xs text-muted">{{ $t('jobs.list.filter.hint') }}</p>
         </div>
-        <p id="job-filter-hint" class="mt-1 text-xs text-muted">{{ $t('jobs.list.filter.hint') }}</p>
+        <div>
+          <label for="job-sort" class="block text-sm font-medium">{{ $t('jobs.list.sort.label') }}</label>
+          <select
+            id="job-sort"
+            :value="sort"
+            class="mt-1 block h-10 w-full rounded-lg bg-surface px-3 text-sm ring-1 ring-line-strong focus:outline-2 focus:outline-offset-0 focus:outline-fg sm:w-auto"
+            @change="setSort(($event.target as HTMLSelectElement).value)"
+          >
+            <option v-for="option in JOB_SORTS" :key="option" :value="option">{{ $t(`jobs.list.sort.${option}`) }}</option>
+          </select>
+          <p v-if="budgetSort" class="mt-1 text-xs text-muted sm:max-w-56">{{ $t('jobs.list.sort.budgetNote') }}</p>
+        </div>
       </div>
 
       <p v-if="notice" role="status" class="mt-6 rounded-xl bg-success-soft px-4 py-3 text-sm text-success ring-1 ring-success-line">

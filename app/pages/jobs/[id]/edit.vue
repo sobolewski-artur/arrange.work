@@ -20,6 +20,7 @@ async function load() {
   if (!u) return
   state.value = 'loading'
   try {
+    await ensureLegacyJobsMoved(u)
     job.value = await fetchMyJob(u, jobId.value)
     state.value = job.value ? 'ready' : 'notFound'
   } catch (e) {
@@ -41,7 +42,7 @@ async function save(updated: NewJob) {
   submitting.value = true
   error.value = null
   try {
-    await updateJob(u, jobId.value, updated)
+    await updateJob(jobId.value, updated)
     await navigateTo(localePath({ path: '/jobs', query: { updated: '1' } }))
   } catch (e) {
     console.error(e)

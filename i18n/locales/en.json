@@ -144,7 +144,7 @@
     },
     "list": {
       "title": "My jobs",
-      "subtitle": "Jobs you have posted, newest first.",
+      "subtitle": "Jobs you have posted.",
       "empty": {
         "title": "No jobs yet",
         "text": "Post your first job and describe what you need done."
@@ -165,6 +165,14 @@
           "title": "No jobs with these tags",
           "text": "Try other tags or clear the filter."
         }
+      },
+      "sort": {
+        "label": "Sort by",
+        "newest": "Newest first",
+        "oldest": "Oldest first",
+        "budgetHigh": "Budget: high to low",
+        "budgetLow": "Budget: low to high",
+        "budgetNote": "Jobs without a budget are listed last. Different currencies are compared by amount only."
       },
       "pagination": "Pagination",
       "range": "{from}–{to} of {total}",

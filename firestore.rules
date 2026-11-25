@@ -18,8 +18,33 @@ service cloud.firestore {
     }
 
     // Per-user documents: users/{uid} and anything nested under it.
+    // (Jobs used to live in users/{uid}/jobs; the app moves them to /jobs on first load.)
     match /users/{uid}/{document=**} {
       allow read, write: if isOwner(uid);
+    }
+
+    // Basic shape checks for a job (see app/utils/jobs.ts). Jobs moved from the old location
+    // may predate tags, so `tags` is only checked when present.
+    function isValidJob(job) {
+      return job.title is string && job.title.size() > 0 && job.title.size() <= 100
+        && job.description is string && job.description.size() <= 5000
+        && (!('tags' in job) || (job.tags is list && job.tags.size() <= 5))
+        && job.status == 'open';
+    }
+
+    // Jobs: one top-level collection, each job with an `owner` field holding the poster's uid.
+    // For now only the owner can see, change or delete a job.
+    match /jobs/{jobId} {
+      // `resource == null`: reading a job that doesn't exist just reports it missing.
+      allow get: if isVerified() && (resource == null || resource.data.owner == request.auth.uid);
+      // Listing is only allowed for queries filtered to owner == your own uid.
+      allow list: if isVerified() && resource.data.owner == request.auth.uid;
+      allow create: if isOwner(request.resource.data.owner) && isValidJob(request.resource.data);
+      allow update: if isOwner(resource.data.owner)
+        && request.resource.data.owner == resource.data.owner
+        && request.resource.data.createdAt == resource.data.createdAt
+        && isValidJob(request.resource.data);
+      allow delete: if isOwner(resource.data.owner);
     }
   }
 }

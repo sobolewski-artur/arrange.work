@@ -1,3 +1,4 @@
+import type { FirebaseError } from 'firebase/app'
 import type { User } from 'firebase/auth'
 import {
   addDoc,
@@ -15,6 +16,8 @@ import {
   startAfter,
   updateDoc,
   where,
+  writeBatch,
+  type DocumentData,
   type DocumentSnapshot,
   type QueryDocumentSnapshot,
   type Timestamp
@@ -54,6 +57,8 @@ export interface NewJob {
 
 export interface Job extends Omit<NewJob, 'location'> {
   id: string
+  /** uid of the user who posted the job. */
+  owner: string
   status: 'open'
   /** Null for jobs posted before the location field existed. */
   location: JobLocation | null
@@ -63,53 +68,119 @@ export interface Job extends Omit<NewJob, 'location'> {
 /** Opaque position in a job list, passed back to fetch the page after it. */
 export type JobCursor = QueryDocumentSnapshot
 
-function jobsCollection(user: User) {
-  return collection(useFirestore(), 'users', user.uid, 'jobs')
+/**
+ * All jobs live in the top-level `jobs` collection; each has an `owner` field with the uid of
+ * the user who posted it. firestore.rules lets only the owner read, change or delete a job.
+ */
+function jobsCollection() {
+  return collection(useFirestore(), 'jobs')
 }
 
+// --- Sorting ---
+
+export const JOB_SORTS = ['newest', 'oldest', 'budgetHigh', 'budgetLow'] as const
+export type JobSort = typeof JOB_SORTS[number]
+
 /**
- * Saves a job the user posted to users/{uid}/jobs (readable and writable only by them,
- * see firestore.rules). Returns the new document's id.
+ * Hidden values stored on each job (`sort.*`) so budget sorting can put jobs without a budget
+ * last in both directions. Firestore leaves out documents missing the sorted field, and
+ * can't order nulls last, so "no budget" is stored as the lowest value for high-to-low and
+ * the highest for low-to-high. Amounts in different currencies are compared as plain numbers.
  */
+function sortFields(job: Pick<NewJob, 'budget'>) {
+  const amount = job.budget?.amount ?? null
+  return {
+    budgetHigh: amount ?? -1,
+    budgetLow: amount ?? Number.MAX_SAFE_INTEGER
+  }
+}
+
+/** Field and direction per sort. Budget sorts fall back to newest first for equal amounts. */
+const SORT_ORDER: Record<JobSort, [field: string, direction: 'asc' | 'desc'][]> = {
+  newest: [['createdAt', 'desc']],
+  oldest: [['createdAt', 'asc']],
+  budgetHigh: [['sort.budgetHigh', 'desc'], ['createdAt', 'desc']],
+  budgetLow: [['sort.budgetLow', 'asc'], ['createdAt', 'desc']]
+}
+
+// --- Writing ---
+
+/** Saves a new job owned by `user`. Returns the new document's id. */
 export async function postJob(user: User, job: NewJob) {
-  const ref = await addDoc(jobsCollection(user), {
+  const ref = await addDoc(jobsCollection(), {
     ...job,
+    owner: user.uid,
+    sort: sortFields(job),
     status: 'open',
     createdAt: serverTimestamp()
   })
   return ref.id
 }
 
-/**
- * The user's jobs, optionally only those with any of `tags`. Filtering by tag needs the
- * composite index (tags array-contains + createdAt desc) in firestore.indexes.json.
- */
-function myJobsQuery(user: User, tags: string[]) {
-  const base = jobsCollection(user)
-  return tags.length ? query(base, where('tags', 'array-contains-any', tags)) : query(base)
+/** Replaces the job's editable fields; keeps its owner, status and createdAt. */
+export async function updateJob(id: string, job: NewJob) {
+  await updateDoc(doc(jobsCollection(), id), {
+    ...job,
+    sort: sortFields(job),
+    // Jobs posted before tags existed had a single category instead; drop it.
+    category: deleteField(),
+    updatedAt: serverTimestamp()
+  })
+}
+
+export async function deleteJob(id: string) {
+  await deleteDoc(doc(jobsCollection(), id))
 }
 
 /**
- * One page of the user's jobs, newest first, optionally only those with any of `tags`.
- * Pass the previous page's `cursor` as `after` for the next page. Fetches one extra
- * document to know whether another page exists.
+ * Moves jobs saved under the old location (users/{uid}/jobs) to the `jobs` collection, keeping
+ * their ids (so old links still work) and adding `owner` and the sort values. Each job is
+ * copied and its old copy deleted in one batch. Returns how many jobs were moved.
  */
-export async function fetchMyJobs(user: User, pageSize: number, after: JobCursor | null = null, tags: string[] = []) {
-  const snapshot = await getDocs(query(
-    myJobsQuery(user, tags),
-    orderBy('createdAt', 'desc'),
-    ...(after ? [startAfter(after)] : []),
-    limit(pageSize + 1)
-  ))
-  const docs = snapshot.docs.slice(0, pageSize)
-  return { jobs: docs.map(jobFromDoc), cursor: docs.at(-1) ?? null, hasMore: snapshot.size > pageSize }
+export async function moveLegacyJobs(user: User) {
+  const legacy = await getDocs(collection(useFirestore(), 'users', user.uid, 'jobs'))
+  for (let i = 0; i < legacy.docs.length; i += 250) {
+    const batch = writeBatch(useFirestore())
+    for (const old of legacy.docs.slice(i, i + 250)) {
+      const data = old.data()
+      batch.set(doc(jobsCollection(), old.id), {
+        ...data,
+        owner: user.uid,
+        sort: sortFields({ budget: data.budget ?? null })
+      })
+      batch.delete(old.ref)
+    }
+    await batch.commit()
+  }
+  return legacy.size
 }
+
+const legacyMoves = new Map<string, Promise<void>>()
+
+/**
+ * Runs moveLegacyJobs once per user per page load (an empty old location costs one read).
+ * Failures are logged and retried on the next call; they don't block loading jobs.
+ */
+export function ensureLegacyJobsMoved(user: User) {
+  let move = legacyMoves.get(user.uid)
+  if (!move) {
+    move = moveLegacyJobs(user).then(() => {}, (e) => {
+      console.warn('Could not move jobs from the old location', e)
+      legacyMoves.delete(user.uid)
+    })
+    legacyMoves.set(user.uid, move)
+  }
+  return move
+}
+
+// --- Reading ---
 
 function jobFromDoc(snapshot: DocumentSnapshot): Job {
   // 'estimate' fills in a just-posted job's createdAt before the server confirms it.
-  const data = snapshot.data({ serverTimestamps: 'estimate' })!
+  const data: DocumentData = snapshot.data({ serverTimestamps: 'estimate' })!
   return {
     id: snapshot.id,
+    owner: data.owner,
     title: data.title,
     tags: normalizeTags(data.tags),
     description: data.description,
@@ -120,28 +191,58 @@ function jobFromDoc(snapshot: DocumentSnapshot): Job {
   }
 }
 
-/** One of the user's jobs, or null if it doesn't exist (e.g. deleted, or a wrong link). */
-export async function fetchMyJob(user: User, id: string) {
-  const snapshot = await getDoc(doc(jobsCollection(user), id))
-  return snapshot.exists() ? jobFromDoc(snapshot) : null
+/**
+ * The user's jobs, optionally only those with any of `tags`. The `owner` filter is required:
+ * the security rules only allow listing your own jobs. Each query shape needs a composite
+ * index from firestore.indexes.json.
+ */
+function myJobsQuery(user: User, tags: string[]) {
+  const mine = where('owner', '==', user.uid)
+  return tags.length
+    ? query(jobsCollection(), mine, where('tags', 'array-contains-any', tags))
+    : query(jobsCollection(), mine)
 }
 
-/** Replaces the job's editable fields; keeps its status and createdAt. */
-export async function updateJob(user: User, id: string, job: NewJob) {
-  await updateDoc(doc(jobsCollection(user), id), {
-    ...job,
-    // Jobs posted before tags existed had a single category instead; drop it.
-    category: deleteField(),
-    updatedAt: serverTimestamp()
-  })
-}
-
-export async function deleteJob(user: User, id: string) {
-  await deleteDoc(doc(jobsCollection(user), id))
+/**
+ * One page of the user's jobs in `sort` order, optionally only those with any of `tags`.
+ * Pass the previous page's `cursor` as `after` for the next page (with the same tags and
+ * sort). Fetches one extra document to know whether another page exists.
+ */
+export async function fetchMyJobs(
+  user: User,
+  pageSize: number,
+  after: JobCursor | null = null,
+  tags: string[] = [],
+  sort: JobSort = 'newest'
+) {
+  const snapshot = await getDocs(query(
+    myJobsQuery(user, tags),
+    ...SORT_ORDER[sort].map(([field, direction]) => orderBy(field, direction)),
+    ...(after ? [startAfter(after)] : []),
+    limit(pageSize + 1)
+  ))
+  const docs = snapshot.docs.slice(0, pageSize)
+  return { jobs: docs.map(jobFromDoc), cursor: docs.at(-1) ?? null, hasMore: snapshot.size > pageSize }
 }
 
 /** Number of the user's jobs, optionally only those with any of `tags` (one cheap aggregation query). */
 export async function countMyJobs(user: User, tags: string[] = []) {
   const snapshot = await getCountFromServer(myJobsQuery(user, tags))
   return snapshot.data().count
+}
+
+/**
+ * One of the user's jobs, or null if it doesn't exist or isn't theirs (the rules deny reading
+ * someone else's job, which is reported the same as a wrong link).
+ */
+export async function fetchMyJob(user: User, id: string) {
+  try {
+    const snapshot = await getDoc(doc(jobsCollection(), id))
+    if (!snapshot.exists()) return null
+    const job = jobFromDoc(snapshot)
+    return job.owner === user.uid ? job : null
+  } catch (e) {
+    if ((e as FirebaseError).code === 'permission-denied') return null
+    throw e
+  }
 }
