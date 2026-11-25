@@ -1,6 +1,125 @@
 {
-  "welcome": "Witaj w arrange.work",
   "language": "Język",
+  "nav": {
+    "label": "Główna",
+    "home": "Strona główna",
+    "howItWorks": "Jak to działa",
+    "about": "O nas",
+    "account": "Konto"
+  },
+  "photos": {
+    "credit": "Zdjęcie:",
+    "alt": {
+      "hero": "Kobieta pracująca na laptopie na kanapie w przytulnym studiu",
+      "clients": "Osoby robiące notatki podczas spotkania przy drewnianym stole",
+      "specialists": "Projektant pracujący przy biurku z monitorem i laptopem",
+      "team": "Grupa osób pracujących razem na laptopach przy wspólnym stole",
+      "collaboration": "Zespół omawiający pracę przy ekranie komputera",
+      "hands": "Grupa osób składających razem dłonie"
+    }
+  },
+  "footer": {
+    "label": "Stopka",
+    "tagline": "Zatrudnij odpowiedniego specjalistę do każdego zadania."
+  },
+  "home": {
+    "meta": {
+      "title": "Zatrudniaj specjalistów do każdego projektu",
+      "description": "arrange.work łączy Cię z wykwalifikowanymi specjalistami. Opisz swój projekt, porównaj fachowców i zatrudnij właściwą osobę."
+    },
+    "hero": {
+      "eyebrow": "Lepszy sposób na zatrudnianie specjalistów",
+      "title": "Znajdź odpowiedniego specjalistę do zadania",
+      "subtitle": "Opisz, czego potrzebujesz, porównaj doświadczonych fachowców i zatrudnij osobę, która najlepiej pasuje — wszystko w jednym miejscu.",
+      "points": {
+        "describe": "Opisz projekt w kilka minut",
+        "compare": "Porównaj specjalistów w jednym widoku",
+        "together": "Współpracuj w jednym miejscu"
+      }
+    },
+    "cta": {
+      "start": "Znajdź specjalistę",
+      "account": "Przejdź do konta",
+      "howItWorks": "Zobacz, jak to działa",
+      "join": "Dołącz jako specjalista"
+    },
+    "categories": {
+      "title": "Specjaliści od każdego rodzaju pracy",
+      "subtitle": "Od jednorazowego zadania po długi projekt — znajdź ludzi z odpowiednimi umiejętnościami.",
+      "items": {
+        "development": { "title": "Programowanie", "text": "Strony, aplikacje, integracje i poprawki techniczne." },
+        "design": { "title": "Projektowanie", "text": "Identyfikacja wizualna, interfejsy, ilustracje i druk." },
+        "marketing": { "title": "Marketing", "text": "Kampanie, media społecznościowe, SEO i rozwój." },
+        "writing": { "title": "Teksty i tłumaczenia", "text": "Copywriting, redakcja i tłumaczenia." },
+        "finance": { "title": "Księgowość i finanse", "text": "Księgowość, podatki i planowanie finansowe." },
+        "legal": { "title": "Porady prawne", "text": "Umowy, zgodność z przepisami i sprawy firmowe." },
+        "data": { "title": "Dane i analityka", "text": "Raporty, dashboardy i wnioski z Twoich danych." },
+        "consulting": { "title": "Doradztwo biznesowe", "text": "Strategia, operacje i usprawnianie procesów." }
+      }
+    },
+    "how": {
+      "title": "Jak to działa",
+      "subtitle": "Zatrudnienie specjalisty to trzy proste kroki.",
+      "steps": {
+        "describe": { "title": "Opisz swój projekt", "text": "Napisz, co trzeba zrobić, jaki masz termin i budżet." },
+        "compare": { "title": "Porównaj specjalistów", "text": "Przejrzyj profile, doświadczenie i stawki, aby wybrać najlepszą osobę." },
+        "hire": { "title": "Zatrudnij i działaj", "text": "Ustalcie szczegóły i współpracujcie aż do zakończenia zadania." }
+      }
+    },
+    "audience": {
+      "clients": {
+        "title": "Dla klientów",
+        "text": "Uzyskaj pomoc eksperta bez długich poszukiwań.",
+        "points": {
+          "find": "Szukaj specjalistów według umiejętności i doświadczenia",
+          "rates": "Poznaj stawki i dostępność od razu",
+          "organized": "Trzymaj wszystkie projekty w jednym miejscu"
+        }
+      },
+      "specialists": {
+        "title": "Dla specjalistów",
+        "text": "Znajdź klientów, którzy potrzebują dokładnie tego, czym się zajmujesz.",
+        "points": {
+          "profile": "Stwórz profil, który pokaże Twoje doświadczenie",
+          "projects": "Otrzymuj dopasowane projekty",
+          "terms": "Ustalaj własne stawki i grafik"
+        }
+      }
+    },
+    "final": {
+      "title": "Zaczynamy?",
+      "text": "Załóż darmowe konto i znajdź specjalistę, którego potrzebuje Twój projekt."
+    }
+  },
+  "about": {
+    "meta": {
+      "title": "O nas",
+      "description": "arrange.work łączy klientów ze specjalistami, aby dobra praca mogła zacząć się szybciej i przebiegać sprawniej."
+    },
+    "hero": {
+      "eyebrow": "O arrange.work",
+      "title": "Ułatwiamy współpracę z właściwymi ludźmi",
+      "text": "arrange.work łączy klientów ze specjalistami, aby dobra praca mogła zacząć się szybciej i przebiegać sprawniej."
+    },
+    "mission": {
+      "title": "Dlaczego tworzymy arrange.work",
+      "p1": "Znalezienie rzetelnego specjalisty często oznacza godziny szukania, niekończące się wiadomości i zgadywanie, kto naprawdę nadaje się do zadania. Specjalistom równie trudno jest znaleźć klientów, którzy docenią ich umiejętności.",
+      "p2": "Budujemy jedno miejsce, w którym obie strony mogą się odnaleźć, ustalić jasne warunki i wykonać pracę — bez zbędnego zamieszania."
+    },
+    "values": {
+      "title": "W co wierzymy",
+      "items": {
+        "clarity": { "title": "Przejrzystość", "text": "Jasny zakres, stawki i oczekiwania od pierwszej wiadomości." },
+        "trust": { "title": "Zaufanie", "text": "Rzetelne profile i otwarta komunikacja po obu stronach." },
+        "fairness": { "title": "Uczciwość", "text": "Platforma, która działa zarówno dla klientów, jak i dla specjalistów." },
+        "simplicity": { "title": "Prostota", "text": "Mniej kroków między pomysłem a skończoną pracą." }
+      }
+    },
+    "stage": {
+      "title": "Dopiero zaczynamy",
+      "text": "arrange.work to młody produkt, który rozwija się razem z użytkownikami. Dołącz wcześnie, powiedz nam, czego potrzebujesz, i pomóż zmienić sposób, w jaki zatrudnia się specjalistów."
+    }
+  },
   "theme": {
     "label": "Motyw",
     "system": "Motyw systemowy",

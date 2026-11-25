@@ -10,8 +10,7 @@ useHead(() => ({
 
 <template>
   <NuxtRouteAnnouncer />
-  <div class="fixed top-4 right-4 z-10">
-    <ThemeToggle />
-  </div>
-  <NuxtPage />
+  <NuxtLayout>
+    <NuxtPage />
+  </NuxtLayout>
 </template>

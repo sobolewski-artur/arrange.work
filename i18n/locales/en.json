@@ -1,6 +1,125 @@
 {
-  "welcome": "Welcome to arrange.work",
   "language": "Language",
+  "nav": {
+    "label": "Main",
+    "home": "Home",
+    "howItWorks": "How it works",
+    "about": "About",
+    "account": "Account"
+  },
+  "photos": {
+    "credit": "Photo:",
+    "alt": {
+      "hero": "Woman working on a laptop on a sofa in a cosy studio",
+      "clients": "People taking notes during a meeting at a wooden table",
+      "specialists": "Designer working at a desk with a monitor and a laptop",
+      "team": "Group of people working together on laptops at a shared table",
+      "collaboration": "Team discussing work around a computer screen",
+      "hands": "Group of people stacking their hands together"
+    }
+  },
+  "footer": {
+    "label": "Footer",
+    "tagline": "Hire the right specialist for the job."
+  },
+  "home": {
+    "meta": {
+      "title": "Hire specialists for any project",
+      "description": "arrange.work connects you with skilled specialists. Describe your project, compare professionals and hire the right person for the job."
+    },
+    "hero": {
+      "eyebrow": "A better way to hire specialists",
+      "title": "Find the right specialist for the job",
+      "subtitle": "Describe what you need, compare skilled professionals and hire the person who fits best — all in one place.",
+      "points": {
+        "describe": "Describe your project in minutes",
+        "compare": "Compare specialists side by side",
+        "together": "Work together in one place"
+      }
+    },
+    "cta": {
+      "start": "Find a specialist",
+      "account": "Go to your account",
+      "howItWorks": "See how it works",
+      "join": "Join as a specialist"
+    },
+    "categories": {
+      "title": "Specialists for every kind of work",
+      "subtitle": "From a one-off task to a long-term project, find people with the right skills.",
+      "items": {
+        "development": { "title": "Software development", "text": "Websites, apps, integrations and technical fixes." },
+        "design": { "title": "Design", "text": "Branding, interfaces, illustration and print." },
+        "marketing": { "title": "Marketing", "text": "Campaigns, social media, SEO and growth." },
+        "writing": { "title": "Writing & translation", "text": "Copywriting, editing and translation." },
+        "finance": { "title": "Accounting & finance", "text": "Bookkeeping, taxes and financial planning." },
+        "legal": { "title": "Legal advice", "text": "Contracts, compliance and company matters." },
+        "data": { "title": "Data & analytics", "text": "Reports, dashboards and insights from your data." },
+        "consulting": { "title": "Business consulting", "text": "Strategy, operations and process improvement." }
+      }
+    },
+    "how": {
+      "title": "How it works",
+      "subtitle": "Hiring a specialist takes three simple steps.",
+      "steps": {
+        "describe": { "title": "Describe your project", "text": "Tell us what needs to be done, your timeline and your budget." },
+        "compare": { "title": "Compare specialists", "text": "Review profiles, experience and rates to find the best fit." },
+        "hire": { "title": "Hire and get it done", "text": "Agree on the details and work together until the job is finished." }
+      }
+    },
+    "audience": {
+      "clients": {
+        "title": "For clients",
+        "text": "Get expert help without the long search.",
+        "points": {
+          "find": "Find specialists by skill and experience",
+          "rates": "See rates and availability up front",
+          "organized": "Keep every project in one place"
+        }
+      },
+      "specialists": {
+        "title": "For specialists",
+        "text": "Find clients who need exactly what you do.",
+        "points": {
+          "profile": "Create a profile that shows your expertise",
+          "projects": "Get matched with relevant projects",
+          "terms": "Set your own rates and schedule"
+        }
+      }
+    },
+    "final": {
+      "title": "Ready to get started?",
+      "text": "Create a free account and find the specialist your project needs."
+    }
+  },
+  "about": {
+    "meta": {
+      "title": "About",
+      "description": "arrange.work brings clients and specialists together, so good work can start sooner and run smoother."
+    },
+    "hero": {
+      "eyebrow": "About arrange.work",
+      "title": "We make it simple to work with the right people",
+      "text": "arrange.work brings clients and specialists together, so good work can start sooner and run smoother."
+    },
+    "mission": {
+      "title": "Why we're building arrange.work",
+      "p1": "Finding a reliable specialist often means hours of searching, endless messages and guessing who is actually right for the job. For specialists, finding clients who value their skills can be just as hard.",
+      "p2": "We're building one place where both sides can find each other, agree on clear terms and get the work done — without the noise."
+    },
+    "values": {
+      "title": "What we believe in",
+      "items": {
+        "clarity": { "title": "Clarity", "text": "Clear scope, rates and expectations from the very first message." },
+        "trust": { "title": "Trust", "text": "Honest profiles and open communication on both sides." },
+        "fairness": { "title": "Fairness", "text": "A platform that works for clients and specialists alike." },
+        "simplicity": { "title": "Simplicity", "text": "Fewer steps between an idea and a finished job." }
+      }
+    },
+    "stage": {
+      "title": "We're just getting started",
+      "text": "arrange.work is a young product that grows with the people who use it. Join early, tell us what you need and help shape how hiring specialists should work."
+    }
+  },
   "theme": {
     "label": "Theme",
     "system": "System theme",
