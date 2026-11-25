@@ -21,13 +21,39 @@ const failed = ref(false)
 
 const listTop = ref<HTMLElement | null>(null)
 
+const route = useRoute()
+const router = useRouter()
+
+// --- Tag filter, kept in the URL (?tags=seo,logo) so it survives reloads and Back ---
+
+const filterTags = computed(() => normalizeTags(String(route.query.tags ?? '').split(','), MAX_FILTER_TAGS))
+const filterActive = computed(() => filterTags.value.length > 0)
+/** What the filter box shows; pushed to the URL whenever it changes. */
+const filterDraft = ref<string[]>([...filterTags.value])
+
+watch(filterDraft, (tags) => {
+  if (tags.join(',') === filterTags.value.join(',')) return
+  router.replace({ query: { ...route.query, tags: tags.length ? tags.join(',') : undefined } })
+})
+
+function toggleFilterTag(tag: string) {
+  filterDraft.value = filterDraft.value.includes(tag)
+    ? filterDraft.value.filter(t => t !== tag)
+    : normalizeTags([...filterDraft.value, tag], MAX_FILTER_TAGS)
+}
+
+// Each load gets a number; a response for an older filter or page is ignored.
+let latestLoad = 0
+
 async function loadPage(index: number) {
   const u = user.value
   if (!u) return
+  const load = ++latestLoad
   loading.value = true
   failed.value = false
   try {
-    const page = await fetchMyJobs(u, PAGE_SIZE, cursors.value[index] ?? null)
+    const page = await fetchMyJobs(u, PAGE_SIZE, cursors.value[index] ?? null, filterTags.value)
+    if (load !== latestLoad) return
     jobs.value = page.jobs
     hasMore.value = page.hasMore
     pageIndex.value = index
@@ -37,18 +63,23 @@ async function loadPage(index: number) {
       cursors.value = next
     }
   } catch (e) {
+    if (load !== latestLoad) return
     console.error(e)
     failed.value = true
   } finally {
-    loading.value = false
+    if (load === latestLoad) loading.value = false
   }
 }
+
+let latestCount = 0
 
 async function loadCount() {
   const u = user.value
   if (!u) return
+  const load = ++latestCount
   try {
-    total.value = await countMyJobs(u)
+    const count = await countMyJobs(u, filterTags.value)
+    if (load === latestCount) total.value = count
   } catch (e) {
     // The count is only for the "1–20 of 57" label; the list works without it.
     console.warn(e)
@@ -63,6 +94,18 @@ watch(user, (u) => {
   loadPage(0)
   loadCount()
 }, { immediate: true })
+
+// A new filter starts again from the first page.
+watch(() => filterTags.value.join(','), () => {
+  filterDraft.value = [...filterTags.value]
+  if (!started.value) return
+  cursors.value = [null]
+  pageIndex.value = 0
+  total.value = null
+  confirmingId.value = null
+  loadPage(0)
+  loadCount()
+})
 
 async function goTo(index: number) {
   if (loading.value || index < 0) return
@@ -82,15 +125,12 @@ function formatBudget(budget: NonNullable<Job['budget']>) {
 
 // --- Notices, editing and deleting ---
 
-const route = useRoute()
-const router = useRouter()
-
 /** One-off success message: after returning from the edit page (?updated=1) or deleting. */
 const notice = ref<string | null>(null)
 onMounted(() => {
   if (route.query.updated) {
     notice.value = t('jobs.list.updated')
-    router.replace({ query: {} })
+    router.replace({ query: { ...route.query, updated: undefined } })
   }
 })
 
@@ -144,6 +184,26 @@ const pageButton = 'inline-flex items-center gap-1 rounded-lg bg-surface px-3 py
         </NuxtLink>
       </div>
 
+      <!-- Tag filter (hidden only while the user has no jobs at all) -->
+      <div v-if="filterActive || jobs.length > 0 || pageIndex > 0" class="mt-8">
+        <label for="job-filter" class="block text-sm font-medium">{{ $t('jobs.list.filter.label') }}</label>
+        <div class="mt-1 flex items-start gap-2">
+          <TagInput
+            id="job-filter"
+            v-model="filterDraft"
+            class="min-w-0 flex-1"
+            describedby="job-filter-hint"
+            :max="MAX_FILTER_TAGS"
+            :placeholder="$t('jobs.list.filter.placeholder')"
+            :limit-placeholder="$t('jobs.list.filter.limit')"
+          />
+          <button v-if="filterDraft.length" type="button" :class="[pageButton, 'min-h-10 shrink-0']" @click="filterDraft = []">
+            {{ $t('jobs.list.filter.clear') }}
+          </button>
+        </div>
+        <p id="job-filter-hint" class="mt-1 text-xs text-muted">{{ $t('jobs.list.filter.hint') }}</p>
+      </div>
+
       <p v-if="notice" role="status" class="mt-6 rounded-xl bg-success-soft px-4 py-3 text-sm text-success ring-1 ring-success-line">
         {{ notice }}
       </p>
@@ -166,6 +226,13 @@ const pageButton = 'inline-flex items-center gap-1 rounded-lg bg-surface px-3 py
         </li>
       </ul>
 
+      <!-- Nothing matches the filter -->
+      <div v-else-if="jobs.length === 0 && filterActive" class="mt-8 rounded-2xl bg-surface px-6 py-14 text-center ring-1 ring-line">
+        <h2 class="text-lg font-semibold">{{ $t('jobs.list.filter.empty.title') }}</h2>
+        <p class="mt-1 text-sm text-muted">{{ $t('jobs.list.filter.empty.text') }}</p>
+        <button type="button" :class="[pageButton, 'mt-6']" @click="filterDraft = []">{{ $t('jobs.list.filter.clear') }}</button>
+      </div>
+
       <!-- Empty -->
       <div v-else-if="jobs.length === 0" class="mt-8 rounded-2xl bg-surface px-6 py-14 text-center ring-1 ring-line">
         <span class="mx-auto flex size-12 items-center justify-center rounded-full bg-well text-muted">
@@ -185,8 +252,18 @@ const pageButton = 'inline-flex items-center gap-1 rounded-lg bg-surface px-3 py
           <li v-for="job in jobs" :key="job.id" class="rounded-2xl bg-surface p-5 shadow-sm ring-1 ring-line sm:p-6">
             <div class="flex items-start justify-between gap-3">
               <ul v-if="job.tags.length" class="flex min-w-0 flex-wrap gap-1.5" :aria-label="$t('jobs.new.fields.tags')">
-                <li v-for="tag in job.tags" :key="tag" class="max-w-full truncate rounded-full bg-well px-2.5 py-0.5 text-xs font-medium text-muted">
-                  {{ tag }}
+                <li v-for="tag in job.tags" :key="tag" class="min-w-0 max-w-full">
+                  <!-- Clicking a tag adds it to (or removes it from) the filter. -->
+                  <button
+                    type="button"
+                    class="max-w-full truncate rounded-full px-2.5 py-0.5 text-xs font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-fg"
+                    :class="filterTags.includes(tag) ? 'bg-primary text-on-primary' : 'bg-well text-muted hover:bg-hover hover:text-fg'"
+                    :aria-pressed="filterTags.includes(tag)"
+                    :title="$t('jobs.list.filter.byTag', { tag })"
+                    @click="toggleFilterTag(tag)"
+                  >
+                    {{ tag }}
+                  </button>
                 </li>
               </ul>
               <span class="ml-auto shrink-0 rounded-full bg-success-soft px-2.5 py-0.5 text-xs font-medium text-success ring-1 ring-success-line">

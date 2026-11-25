@@ -154,6 +154,18 @@
       },
       "noBudget": "No budget given",
       "posted": "Posted {date}",
+      "filter": {
+        "label": "Filter by tags",
+        "placeholder": "Type a tag and press Enter",
+        "limit": "Filter limit reached",
+        "hint": "Shows jobs with any of these tags. You can also click a tag on a job.",
+        "clear": "Clear filter",
+        "byTag": "Filter by tag {tag}",
+        "empty": {
+          "title": "No jobs with these tags",
+          "text": "Try other tags or clear the filter."
+        }
+      },
       "pagination": "Pagination",
       "range": "{from}–{to} of {total}",
       "page": "Page {page} of {pages}",

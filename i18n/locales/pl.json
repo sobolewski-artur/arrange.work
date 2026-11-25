@@ -154,6 +154,18 @@
       },
       "noBudget": "Bez podanego budżetu",
       "posted": "Dodano {date}",
+      "filter": {
+        "label": "Filtruj po tagach",
+        "placeholder": "Wpisz tag i naciśnij Enter",
+        "limit": "Osiągnięto limit filtra",
+        "hint": "Pokazuje zlecenia z dowolnym z tych tagów. Możesz też kliknąć tag przy zleceniu.",
+        "clear": "Wyczyść filtr",
+        "byTag": "Filtruj po tagu {tag}",
+        "empty": {
+          "title": "Brak zleceń z tymi tagami",
+          "text": "Spróbuj innych tagów lub wyczyść filtr."
+        }
+      },
       "pagination": "Stronicowanie",
       "range": "{from}–{to} z {total}",
       "page": "Strona {page} z {pages}",

@@ -14,6 +14,7 @@ import {
   serverTimestamp,
   startAfter,
   updateDoc,
+  where,
   type DocumentSnapshot,
   type QueryDocumentSnapshot,
   type Timestamp
@@ -80,12 +81,22 @@ export async function postJob(user: User, job: NewJob) {
 }
 
 /**
- * One page of the user's jobs, newest first. Pass the previous page's `cursor` as `after`
- * for the next page. Fetches one extra document to know whether another page exists.
+ * The user's jobs, optionally only those with any of `tags`. Filtering by tag needs the
+ * composite index (tags array-contains + createdAt desc) in firestore.indexes.json.
  */
-export async function fetchMyJobs(user: User, pageSize: number, after: JobCursor | null = null) {
+function myJobsQuery(user: User, tags: string[]) {
+  const base = jobsCollection(user)
+  return tags.length ? query(base, where('tags', 'array-contains-any', tags)) : query(base)
+}
+
+/**
+ * One page of the user's jobs, newest first, optionally only those with any of `tags`.
+ * Pass the previous page's `cursor` as `after` for the next page. Fetches one extra
+ * document to know whether another page exists.
+ */
+export async function fetchMyJobs(user: User, pageSize: number, after: JobCursor | null = null, tags: string[] = []) {
   const snapshot = await getDocs(query(
-    jobsCollection(user),
+    myJobsQuery(user, tags),
     orderBy('createdAt', 'desc'),
     ...(after ? [startAfter(after)] : []),
     limit(pageSize + 1)
@@ -129,8 +140,8 @@ export async function deleteJob(user: User, id: string) {
   await deleteDoc(doc(jobsCollection(user), id))
 }
 
-/** Total number of jobs the user has posted (one cheap aggregation query). */
-export async function countMyJobs(user: User) {
-  const snapshot = await getCountFromServer(jobsCollection(user))
+/** Number of the user's jobs, optionally only those with any of `tags` (one cheap aggregation query). */
+export async function countMyJobs(user: User, tags: string[] = []) {
+  const snapshot = await getCountFromServer(myJobsQuery(user, tags))
   return snapshot.data().count
 }

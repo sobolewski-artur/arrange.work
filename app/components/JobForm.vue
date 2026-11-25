@@ -18,46 +18,12 @@ const { locale } = useI18n()
 
 const title = ref(props.initial?.title ?? '')
 
-// --- Tags: typed by the client; Enter or "," turns the text into a chip ---
-
+// Tags are typed by the client (see components/TagInput.vue). `tagPending` is text typed but not
+// yet confirmed with Enter; it counts towards the required tag and is added on submit.
 const tags = ref<string[]>(normalizeTags(props.initial?.tags ?? []))
-const tagInput = ref('')
-const tagInputEl = ref<HTMLInputElement | null>(null)
-const tagLimitReached = computed(() => tags.value.length >= MAX_JOB_TAGS)
+const tagPending = ref('')
+const tagInput = ref<{ commit: () => void } | null>(null)
 
-/** Adds comma-separated text as tags (normalized, de-duplicated, capped). */
-function addTags(text: string) {
-  tags.value = normalizeTags([...tags.value, ...text.split(',')])
-}
-
-function commitTagInput() {
-  if (tagInput.value.trim()) addTags(tagInput.value)
-  tagInput.value = ''
-}
-
-function onTagKeydown(event: KeyboardEvent) {
-  if (event.key === 'Enter' || event.key === ',') {
-    // Enter adds the tag instead of submitting the form.
-    event.preventDefault()
-    commitTagInput()
-  } else if (event.key === 'Backspace' && tagInput.value === '' && tags.value.length > 0) {
-    tags.value = tags.value.slice(0, -1)
-  }
-}
-
-// Pasted text, and phone keyboards that don't report "," as a key, arrive here.
-function onTagInput() {
-  if (!tagInput.value.includes(',')) return
-  const parts = tagInput.value.split(',')
-  const rest = parts.pop() ?? ''
-  addTags(parts.join(','))
-  tagInput.value = tagLimitReached.value ? '' : rest
-}
-
-function removeTag(tag: string) {
-  tags.value = tags.value.filter(t => t !== tag)
-  nextTick(() => tagInputEl.value?.focus())
-}
 const description = ref(props.initial?.description ?? '')
 // Jobs posted before locations existed have none; treat them as remote.
 const locationMode = ref<JobLocationMode>(props.initial?.location?.mode ?? 'remote')
@@ -68,7 +34,7 @@ const currency = ref<JobCurrency>(props.initial?.budget?.currency ?? (locale.val
 const needsCity = computed(() => locationMode.value !== 'remote')
 
 // At least one tag is required; text typed but not yet confirmed with Enter counts.
-const hasTag = computed(() => tags.value.length > 0 || normalizeTag(tagInput.value) !== '')
+const hasTag = computed(() => tags.value.length > 0 || normalizeTag(tagPending.value) !== '')
 
 const canSubmit = computed(() =>
   !props.submitting && title.value.trim() !== '' && description.value.trim() !== '' && hasTag.value
@@ -77,7 +43,7 @@ const canSubmit = computed(() =>
 
 function submit() {
   if (!canSubmit.value) return
-  commitTagInput()
+  tagInput.value?.commit()
   if (tags.value.length === 0) return
   const amount = typeof budgetAmount.value === 'number' && budgetAmount.value > 0 ? Math.round(budgetAmount.value) : null
   emit('submit', {
@@ -116,47 +82,19 @@ const secondaryButton = 'inline-flex items-center justify-center rounded-lg bg-s
         <label for="job-tags" class="block text-sm font-medium">{{ $t('jobs.new.fields.tags') }}</label>
         <span class="text-xs text-subtle tabular-nums" aria-hidden="true">{{ tags.length }} / {{ MAX_JOB_TAGS }}</span>
       </div>
-      <!-- Chips and the text field share one box; clicking the box focuses the field. -->
-      <div
-        class="mt-1 flex min-h-10 cursor-text flex-wrap items-center gap-1.5 rounded-lg bg-surface px-2 py-1.5 ring-1 ring-line-strong focus-within:outline-2 focus-within:outline-fg"
-        :class="submitting && 'opacity-60'"
-        @click="tagInputEl?.focus()"
-      >
-        <span
-          v-for="tag in tags"
-          :key="tag"
-          class="inline-flex max-w-full items-center gap-0.5 rounded-full bg-well py-0.5 pr-0.5 pl-2.5 text-sm"
-        >
-          <span class="truncate">{{ tag }}</span>
-          <button
-            type="button"
-            class="flex size-6 shrink-0 items-center justify-center rounded-full text-muted transition hover:bg-hover hover:text-fg focus-visible:outline-2 focus-visible:outline-fg"
-            :aria-label="$t('jobs.new.fields.removeTag', { tag })"
-            :disabled="submitting"
-            @click.stop="removeTag(tag)"
-          >
-            <svg class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true">
-              <path d="M18 6 6 18M6 6l12 12" />
-            </svg>
-          </button>
-        </span>
-        <input
-          id="job-tags"
-          ref="tagInputEl"
-          v-model="tagInput"
-          type="text"
-          autocomplete="off"
-          enterkeyhint="enter"
-          aria-required="true"
-          aria-describedby="job-tags-hint"
-          :placeholder="tagLimitReached ? $t('jobs.new.fields.tagsLimit') : $t('jobs.new.fields.tagsPlaceholder')"
-          :disabled="submitting || tagLimitReached"
-          class="min-w-32 flex-1 bg-transparent px-1 py-1 text-sm outline-none placeholder:text-subtle disabled:cursor-not-allowed"
-          @keydown="onTagKeydown"
-          @input="onTagInput"
-          @blur="commitTagInput"
-        >
-      </div>
+      <TagInput
+        id="job-tags"
+        ref="tagInput"
+        v-model="tags"
+        v-model:pending="tagPending"
+        class="mt-1"
+        required
+        describedby="job-tags-hint"
+        :max="MAX_JOB_TAGS"
+        :placeholder="$t('jobs.new.fields.tagsPlaceholder')"
+        :limit-placeholder="$t('jobs.new.fields.tagsLimit')"
+        :disabled="submitting"
+      />
       <p id="job-tags-hint" class="mt-1 text-xs text-muted">
         {{ $t('jobs.new.fields.tagsHint', { max: MAX_JOB_TAGS, length: MAX_TAG_LENGTH }) }}
       </p>

@@ -17,15 +17,21 @@ export function normalizeTag(raw: string): string {
     .trim()
 }
 
-/** Cleans a list of tags: normalized, non-empty, no duplicates, at most MAX_JOB_TAGS. */
-export function normalizeTags(tags: unknown): string[] {
+/** Cleans a list of tags: normalized, non-empty, no duplicates, at most `max`. */
+export function normalizeTags(tags: unknown, max = MAX_JOB_TAGS): string[] {
   if (!Array.isArray(tags)) return []
   const result: string[] = []
   for (const tag of tags) {
     if (typeof tag !== 'string') continue
     const clean = normalizeTag(tag)
     if (clean && !result.includes(clean)) result.push(clean)
-    if (result.length === MAX_JOB_TAGS) break
+    if (result.length === max) break
   }
   return result
 }
+
+/**
+ * Most tags a "My jobs" filter can combine. Firestore's array-contains-any allows up to 30;
+ * a smaller cap keeps the filter readable.
+ */
+export const MAX_FILTER_TAGS = 10
