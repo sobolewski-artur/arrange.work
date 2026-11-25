@@ -58,7 +58,15 @@
         "finance": { "title": "Księgowość i finanse", "text": "Księgowość, podatki i planowanie finansowe." },
         "legal": { "title": "Porady prawne", "text": "Umowy, zgodność z przepisami i sprawy firmowe." },
         "data": { "title": "Dane i analityka", "text": "Raporty, dashboardy i wnioski z Twoich danych." },
-        "consulting": { "title": "Doradztwo biznesowe", "text": "Strategia, operacje i usprawnianie procesów." }
+        "consulting": { "title": "Doradztwo biznesowe", "text": "Strategia, operacje i usprawnianie procesów." },
+        "video": { "title": "Wideo i animacja", "text": "Montaż, motion design i filmy instruktażowe." },
+        "photography": { "title": "Fotografia", "text": "Zdjęcia produktowe, eventowe i portretowe." },
+        "audio": { "title": "Muzyka i dźwięk", "text": "Lektor, miks i udźwiękowienie." },
+        "itSupport": { "title": "Wsparcie IT", "text": "Konfiguracja, sieci, bezpieczeństwo i naprawa usterek." },
+        "tutoring": { "title": "Korepetycje i szkolenia", "text": "Lekcje, kursy i warsztaty." },
+        "hr": { "title": "HR i rekrutacja", "text": "Rekrutacja, onboarding i doradztwo kadrowe." },
+        "renovation": { "title": "Remonty i naprawy", "text": "Wykończenia, instalacje i drobne naprawy." },
+        "sales": { "title": "Sprzedaż i obsługa klienta", "text": "Pozyskiwanie klientów, wsparcie i opieka nad kontem." }
       }
     },
     "how": {
@@ -102,8 +110,11 @@
       "fields": {
         "title": "Tytuł zlecenia",
         "titlePlaceholder": "np. Strona internetowa dla mojej piekarni",
-        "category": "Kategoria",
-        "categoryPlaceholder": "Wybierz kategorię",
+        "tags": "Tagi",
+        "tagsHint": "Dodaj co najmniej jeden: wpisz tag i naciśnij Enter lub przecinek. Maksymalnie {max} tagów po {length} znaków.",
+        "tagsPlaceholder": "np. wordpress, seo, pilne",
+        "tagsLimit": "Osiągnięto limit tagów",
+        "removeTag": "Usuń tag {tag}",
         "description": "Opis",
         "descriptionPlaceholder": "Co trzeba zrobić, co już masz i jak ma wyglądać efekt końcowy.",
         "location": "Lokalizacja",
@@ -148,9 +159,29 @@
       "page": "Strona {page} z {pages}",
       "previous": "Poprzednia",
       "next": "Następna",
+      "edit": "Edytuj",
+      "delete": "Usuń",
+      "editJob": "Edytuj „{title}”",
+      "deleteJob": "Usuń „{title}”",
+      "confirmDelete": "Usunąć to zlecenie? Tej operacji nie można cofnąć.",
+      "updated": "Zaktualizowano zlecenie.",
+      "deleted": "Usunięto „{title}”.",
       "errors": {
         "load": "Nie udało się wczytać zleceń.",
-        "retry": "Spróbuj ponownie"
+        "retry": "Spróbuj ponownie",
+        "delete": "Nie udało się usunąć zlecenia. Spróbuj ponownie."
+      }
+    },
+    "edit": {
+      "title": "Edytuj zlecenie",
+      "submit": "Zapisz zmiany",
+      "notFound": {
+        "title": "Nie znaleziono zlecenia",
+        "text": "To zlecenie nie istnieje lub zostało usunięte."
+      },
+      "errors": {
+        "load": "Nie udało się wczytać zlecenia.",
+        "failed": "Nie udało się zapisać zmian. Spróbuj ponownie."
       }
     }
   },

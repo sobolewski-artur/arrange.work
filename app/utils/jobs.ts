@@ -2,13 +2,19 @@ import type { User } from 'firebase/auth'
 import {
   addDoc,
   collection,
+  deleteDoc,
+  deleteField,
+  doc,
   getCountFromServer,
+  getDoc,
   getDocs,
   limit,
   orderBy,
   query,
   serverTimestamp,
   startAfter,
+  updateDoc,
+  type DocumentSnapshot,
   type QueryDocumentSnapshot,
   type Timestamp
 } from 'firebase/firestore'
@@ -37,7 +43,8 @@ export interface JobLocation {
 
 export interface NewJob {
   title: string
-  category: CategoryKey
+  /** Free-text tags typed by the client (see utils/tags.ts). The form requires at least one; jobs from before tags existed have none. */
+  tags: string[]
   description: string
   location: JobLocation
   /** Whole amount in `currency`, or null when the client didn't give a budget. */
@@ -84,21 +91,42 @@ export async function fetchMyJobs(user: User, pageSize: number, after: JobCursor
     limit(pageSize + 1)
   ))
   const docs = snapshot.docs.slice(0, pageSize)
-  const jobs: Job[] = docs.map((doc) => {
-    // 'estimate' fills in a just-posted job's createdAt before the server confirms it.
-    const data = doc.data({ serverTimestamps: 'estimate' })
-    return {
-      id: doc.id,
-      title: data.title,
-      category: data.category,
-      description: data.description,
-      location: data.location ?? null,
-      budget: data.budget ?? null,
-      status: data.status,
-      createdAt: (data.createdAt as Timestamp | null)?.toDate() ?? null
-    }
+  return { jobs: docs.map(jobFromDoc), cursor: docs.at(-1) ?? null, hasMore: snapshot.size > pageSize }
+}
+
+function jobFromDoc(snapshot: DocumentSnapshot): Job {
+  // 'estimate' fills in a just-posted job's createdAt before the server confirms it.
+  const data = snapshot.data({ serverTimestamps: 'estimate' })!
+  return {
+    id: snapshot.id,
+    title: data.title,
+    tags: normalizeTags(data.tags),
+    description: data.description,
+    location: data.location ?? null,
+    budget: data.budget ?? null,
+    status: data.status,
+    createdAt: (data.createdAt as Timestamp | null)?.toDate() ?? null
+  }
+}
+
+/** One of the user's jobs, or null if it doesn't exist (e.g. deleted, or a wrong link). */
+export async function fetchMyJob(user: User, id: string) {
+  const snapshot = await getDoc(doc(jobsCollection(user), id))
+  return snapshot.exists() ? jobFromDoc(snapshot) : null
+}
+
+/** Replaces the job's editable fields; keeps its status and createdAt. */
+export async function updateJob(user: User, id: string, job: NewJob) {
+  await updateDoc(doc(jobsCollection(user), id), {
+    ...job,
+    // Jobs posted before tags existed had a single category instead; drop it.
+    category: deleteField(),
+    updatedAt: serverTimestamp()
   })
-  return { jobs, cursor: docs.at(-1) ?? null, hasMore: snapshot.size > pageSize }
+}
+
+export async function deleteJob(user: User, id: string) {
+  await deleteDoc(doc(jobsCollection(user), id))
 }
 
 /** Total number of jobs the user has posted (one cheap aggregation query). */

@@ -78,18 +78,19 @@ const secondaryButton = 'inline-flex items-center justify-center rounded-lg bg-s
         <h2 id="categories-title" class="text-3xl font-bold tracking-tight text-balance">{{ $t('home.categories.title') }}</h2>
         <p class="mt-3 text-pretty text-muted">{{ $t('home.categories.subtitle') }}</p>
       </div>
-      <ul class="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <!-- Two compact columns on phones (no descriptions) so the list stays short. -->
+      <ul class="mt-10 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
         <li
           v-for="category in CATEGORIES"
           :key="category.key"
-          class="rounded-2xl bg-surface p-6 shadow-sm ring-1 ring-line"
+          class="rounded-2xl bg-surface p-4 shadow-sm ring-1 ring-line sm:p-6"
         >
           <span class="flex size-10 items-center justify-center rounded-lg bg-well">
             <!-- eslint-disable-next-line vue/no-v-html -- static icon markup defined above -->
             <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" v-html="category.icon" />
           </span>
-          <h3 class="mt-4 font-semibold">{{ $t(`home.categories.items.${category.key}.title`) }}</h3>
-          <p class="mt-1 text-sm text-muted">{{ $t(`home.categories.items.${category.key}.text`) }}</p>
+          <h3 class="mt-3 text-sm font-semibold sm:mt-4 sm:text-base">{{ $t(`home.categories.items.${category.key}.title`) }}</h3>
+          <p class="mt-1 hidden text-sm text-muted sm:block">{{ $t(`home.categories.items.${category.key}.text`) }}</p>
         </li>
       </ul>
     </section>

@@ -58,7 +58,15 @@
         "finance": { "title": "Accounting & finance", "text": "Bookkeeping, taxes and financial planning." },
         "legal": { "title": "Legal advice", "text": "Contracts, compliance and company matters." },
         "data": { "title": "Data & analytics", "text": "Reports, dashboards and insights from your data." },
-        "consulting": { "title": "Business consulting", "text": "Strategy, operations and process improvement." }
+        "consulting": { "title": "Business consulting", "text": "Strategy, operations and process improvement." },
+        "video": { "title": "Video & animation", "text": "Editing, motion graphics and explainer videos." },
+        "photography": { "title": "Photography", "text": "Product, event and portrait photos." },
+        "audio": { "title": "Music & audio", "text": "Voice-over, mixing and sound design." },
+        "itSupport": { "title": "IT support", "text": "Setup, networks, security and troubleshooting." },
+        "tutoring": { "title": "Tutoring & training", "text": "Lessons, courses and workshops." },
+        "hr": { "title": "HR & recruitment", "text": "Hiring, onboarding and HR advice." },
+        "renovation": { "title": "Renovation & repairs", "text": "Home improvements, installations and fixes." },
+        "sales": { "title": "Sales & customer service", "text": "Lead generation, support and account care." }
       }
     },
     "how": {
@@ -102,8 +110,11 @@
       "fields": {
         "title": "Job title",
         "titlePlaceholder": "e.g. Build a website for my bakery",
-        "category": "Category",
-        "categoryPlaceholder": "Choose a category",
+        "tags": "Tags",
+        "tagsHint": "Add at least one: type a tag and press Enter or a comma. Up to {max} tags, {length} characters each.",
+        "tagsPlaceholder": "e.g. wordpress, seo, urgent",
+        "tagsLimit": "Tag limit reached",
+        "removeTag": "Remove tag {tag}",
         "description": "Description",
         "descriptionPlaceholder": "What needs to be done, what you already have and what the result should look like.",
         "location": "Location",
@@ -148,9 +159,29 @@
       "page": "Page {page} of {pages}",
       "previous": "Previous",
       "next": "Next",
+      "edit": "Edit",
+      "delete": "Delete",
+      "editJob": "Edit “{title}”",
+      "deleteJob": "Delete “{title}”",
+      "confirmDelete": "Delete this job? This can't be undone.",
+      "updated": "Job updated.",
+      "deleted": "Deleted “{title}”.",
       "errors": {
         "load": "Couldn't load your jobs.",
-        "retry": "Try again"
+        "retry": "Try again",
+        "delete": "Couldn't delete this job. Please try again."
+      }
+    },
+    "edit": {
+      "title": "Edit job",
+      "submit": "Save changes",
+      "notFound": {
+        "title": "Job not found",
+        "text": "This job doesn't exist or has been deleted."
+      },
+      "errors": {
+        "load": "Couldn't load this job.",
+        "failed": "Couldn't save your changes. Please try again."
       }
     }
   },
