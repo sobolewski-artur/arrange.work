@@ -1,4 +1,4 @@
-<!-- Public pages (home, about): site header and footer. Use with definePageMeta({ layout: 'marketing' }). -->
+<!-- Site header and footer, for public and signed-in pages (home, about, account). Use with definePageMeta({ layout: 'site' }). -->
 <template>
   <div class="flex min-h-screen flex-col bg-page text-fg">
     <SiteHeader />

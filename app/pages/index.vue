@@ -1,5 +1,5 @@
 <script setup lang="ts">
-definePageMeta({ layout: 'marketing' })
+definePageMeta({ layout: 'site' })
 
 const { t } = useI18n()
 const localePath = useLocalePath()
