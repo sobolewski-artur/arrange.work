@@ -119,9 +119,11 @@
         "removeTag": "Remove tag {tag}",
         "description": "Description",
         "descriptionPlaceholder": "What needs to be done, what you already have and what the result should look like.",
-        "location": "Location",
-        "city": "City",
-        "cityPlaceholder": "e.g. Warszawa",
+        "locations": "Locations",
+        "locationsPlaceholder": "e.g. Warszawa",
+        "locationsLimit": "Location limit reached",
+        "locationsHint": "Add at least one city: type it or pick a suggestion, then press Enter. Up to {max}.",
+        "removeLocation": "Remove {value}",
         "budget": "Budget",
         "budgetAmount": "Budget amount",
         "currency": "Currency",
@@ -138,11 +140,6 @@
       "errors": {
         "failed": "Couldn't post your job. Please try again."
       }
-    },
-    "location": {
-      "remote": "Remote",
-      "onsite": "On-site",
-      "hybrid": "Hybrid"
     },
     "list": {
       "title": "My jobs",

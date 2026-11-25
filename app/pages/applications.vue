@@ -8,7 +8,7 @@ const localePath = useLocalePath()
 const route = useRoute()
 const router = useRouter()
 const user = useCurrentUser()
-const { formatBudget, formatLocation, formatDate } = useJobFormat()
+const { formatBudget, formatLocations, formatDate } = useJobFormat()
 
 useHead({ title: () => t('applications.title') })
 
@@ -184,7 +184,7 @@ const primaryButton = 'inline-flex items-center justify-center rounded-lg bg-pri
 
             <div v-if="job" class="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted">
               <span>{{ formatBudget(job.budget) }}</span>
-              <span v-if="job.location">{{ formatLocation(job.location) }}</span>
+              <span v-if="job.locations.length">{{ formatLocations(job.locations) }}</span>
             </div>
 
             <!-- Clamp an inner element: clamping the padded box itself would show part of the next line. -->

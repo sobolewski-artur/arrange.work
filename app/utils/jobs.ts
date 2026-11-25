@@ -29,20 +29,31 @@ export const JOB_CURRENCIES = ['PLN', 'EUR', 'USD'] as const
 
 export type JobCurrency = typeof JOB_CURRENCIES[number]
 
-/** Where the work happens. On-site and hybrid jobs also have a city. */
-export const JOB_LOCATION_MODES = ['remote', 'onsite', 'hybrid'] as const
+/** Where the work happens: one or more cities, at least one per job. */
+export const MAX_JOB_LOCATIONS = 10
 export const MAX_JOB_CITY_LENGTH = 80
-/** Suggestions offered in the city field; any other city can be typed in. */
+/** Suggestions offered in the locations field; any other city can be typed in. */
 export const SUGGESTED_CITIES = [
   'Warszawa', 'Kraków', 'Wrocław', 'Łódź', 'Poznań', 'Gdańsk', 'Gdynia', 'Szczecin', 'Bydgoszcz', 'Lublin',
   'Białystok', 'Katowice', 'Rzeszów', 'Toruń', 'Kielce', 'Olsztyn', 'Opole', 'Częstochowa', 'Radom', 'Zielona Góra'
 ] as const
 
-export type JobLocationMode = typeof JOB_LOCATION_MODES[number]
-export interface JobLocation {
-  mode: JobLocationMode
-  /** Set for on-site and hybrid jobs, null for remote ones. */
-  city: string | null
+/**
+ * Cleans a list of city names: whitespace collapsed, length capped, empty ones dropped,
+ * duplicates (ignoring case) removed, at most `max`. Unlike tags, the case is kept, and a
+ * name matching a suggested city takes its spelling ("kraków" → "Kraków").
+ */
+export function normalizeLocations(values: unknown, max = MAX_JOB_LOCATIONS): string[] {
+  if (!Array.isArray(values)) return []
+  const result: string[] = []
+  for (const value of values) {
+    if (typeof value !== 'string') continue
+    const typed = value.replace(/\s+/g, ' ').trim().slice(0, MAX_JOB_CITY_LENGTH).trim()
+    const city = SUGGESTED_CITIES.find(c => c.toLocaleLowerCase() === typed.toLocaleLowerCase()) ?? typed
+    if (city && !result.some(c => c.toLocaleLowerCase() === city.toLocaleLowerCase())) result.push(city)
+    if (result.length === max) break
+  }
+  return result
 }
 
 export interface NewJob {
@@ -50,18 +61,17 @@ export interface NewJob {
   /** Free-text tags typed by the client (see utils/tags.ts). The form requires at least one; jobs from before tags existed have none. */
   tags: string[]
   description: string
-  location: JobLocation
+  /** Cities where the work happens (see normalizeLocations). The form requires at least one. */
+  locations: string[]
   /** Whole amount in `currency`, or null when the client didn't give a budget. */
   budget: { amount: number, currency: JobCurrency } | null
 }
 
-export interface Job extends Omit<NewJob, 'location'> {
+export interface Job extends NewJob {
   id: string
   /** uid of the user who posted the job. */
   owner: string
   status: 'open'
-  /** Null for jobs posted before the location field existed. */
-  location: JobLocation | null
   createdAt: Date | null
 }
 
@@ -123,8 +133,9 @@ export async function updateJob(id: string, job: NewJob) {
   await updateDoc(doc(jobsCollection(), id), {
     ...job,
     sort: sortFields(job),
-    // Jobs posted before tags existed had a single category instead; drop it.
+    // Fields replaced by newer ones: category (now tags) and location (now locations).
     category: deleteField(),
+    location: deleteField(),
     updatedAt: serverTimestamp()
   })
 }
@@ -187,7 +198,10 @@ function jobFromDoc(snapshot: DocumentSnapshot): Job {
     title: data.title,
     tags: normalizeTags(data.tags),
     description: data.description,
-    location: data.location ?? null,
+    // Older jobs had a single `location` ({ mode, city }); keep its city, if any.
+    locations: Array.isArray(data.locations)
+      ? normalizeLocations(data.locations)
+      : normalizeLocations([data.location?.city]),
     budget: data.budget ?? null,
     status: data.status,
     createdAt: (data.createdAt as Timestamp | null)?.toDate() ?? null

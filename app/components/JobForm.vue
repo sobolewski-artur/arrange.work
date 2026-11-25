@@ -5,7 +5,7 @@
  */
 const props = defineProps<{
   /** Values to start from when editing; empty form when omitted. */
-  initial?: Omit<NewJob, 'location'> & { location: JobLocation | null }
+  initial?: NewJob
   submitLabel: string
   cancelTo: string
   submitting: boolean
@@ -25,32 +25,35 @@ const tagPending = ref('')
 const tagInput = ref<{ commit: () => void } | null>(null)
 
 const description = ref(props.initial?.description ?? '')
-// Jobs posted before locations existed have none; treat them as remote.
-const locationMode = ref<JobLocationMode>(props.initial?.location?.mode ?? 'remote')
-const city = ref(props.initial?.location?.city ?? '')
+
+// Cities, typed or picked from suggestions; at least one is required. Like tags, a city typed
+// but not yet confirmed with Enter counts and is added on submit.
+const locations = ref<string[]>(normalizeLocations(props.initial?.locations ?? []))
+const locationPending = ref('')
+const locationInput = ref<{ commit: () => void } | null>(null)
+
 const budgetAmount = ref<number | ''>(props.initial?.budget?.amount ?? '')
 const currency = ref<JobCurrency>(props.initial?.budget?.currency ?? (locale.value === 'pl' ? 'PLN' : 'EUR'))
 
-const needsCity = computed(() => locationMode.value !== 'remote')
-
 // At least one tag is required; text typed but not yet confirmed with Enter counts.
 const hasTag = computed(() => tags.value.length > 0 || normalizeTag(tagPending.value) !== '')
+const hasLocation = computed(() => locations.value.length > 0 || locationPending.value.trim() !== '')
 
 const canSubmit = computed(() =>
-  !props.submitting && title.value.trim() !== '' && description.value.trim() !== '' && hasTag.value
-  && (!needsCity.value || city.value.trim() !== '')
+  !props.submitting && title.value.trim() !== '' && description.value.trim() !== '' && hasTag.value && hasLocation.value
 )
 
 function submit() {
   if (!canSubmit.value) return
   tagInput.value?.commit()
-  if (tags.value.length === 0) return
+  locationInput.value?.commit()
+  if (tags.value.length === 0 || locations.value.length === 0) return
   const amount = typeof budgetAmount.value === 'number' && budgetAmount.value > 0 ? Math.round(budgetAmount.value) : null
   emit('submit', {
     title: title.value.trim(),
     tags: tags.value,
     description: description.value.trim(),
-    location: { mode: locationMode.value, city: needsCity.value ? city.value.trim() : null },
+    locations: locations.value,
     budget: amount ? { amount, currency: currency.value } : null
   })
 }
@@ -100,38 +103,31 @@ const secondaryButton = 'inline-flex items-center justify-center rounded-lg bg-s
       </p>
     </div>
 
-    <fieldset>
-      <legend class="text-sm font-medium">{{ $t('jobs.new.fields.location') }}</legend>
-      <div class="mt-1 grid grid-cols-3 gap-1 rounded-lg bg-well p-1">
-        <label
-          v-for="mode in JOB_LOCATION_MODES"
-          :key="mode"
-          class="relative flex cursor-pointer items-center justify-center gap-1.5 rounded-md px-2 py-2 text-center text-sm font-medium text-muted transition-colors hover:text-fg has-checked:bg-surface has-checked:text-fg has-checked:shadow-sm has-focus-visible:outline-2 has-focus-visible:outline-fg has-disabled:cursor-not-allowed has-disabled:opacity-60"
-        >
-          <input v-model="locationMode" type="radio" name="location-mode" :value="mode" :disabled="submitting" class="sr-only">
-          {{ $t(`jobs.location.${mode}`) }}
-        </label>
+    <div>
+      <div class="flex items-baseline justify-between gap-4">
+        <label for="job-locations" class="block text-sm font-medium">{{ $t('jobs.new.fields.locations') }}</label>
+        <span class="text-xs text-subtle tabular-nums" aria-hidden="true">{{ locations.length }} / {{ MAX_JOB_LOCATIONS }}</span>
       </div>
-      <div v-if="needsCity" class="mt-3">
-        <label for="job-city" class="block text-sm font-medium">{{ $t('jobs.new.fields.city') }}</label>
-        <input
-          id="job-city"
-          v-model="city"
-          type="text"
-          list="job-city-suggestions"
-          autocomplete="address-level2"
-          required
-          pattern=".*\S.*"
-          :maxlength="MAX_JOB_CITY_LENGTH"
-          :placeholder="$t('jobs.new.fields.cityPlaceholder')"
-          :disabled="submitting"
-          :class="inputClass"
-        >
-        <datalist id="job-city-suggestions">
-          <option v-for="c in SUGGESTED_CITIES" :key="c" :value="c" />
-        </datalist>
-      </div>
-    </fieldset>
+      <TagInput
+        id="job-locations"
+        ref="locationInput"
+        v-model="locations"
+        v-model:pending="locationPending"
+        class="mt-1"
+        required
+        describedby="job-locations-hint"
+        :max="MAX_JOB_LOCATIONS"
+        :normalize="normalizeLocations"
+        :suggestions="SUGGESTED_CITIES"
+        remove-label-key="jobs.new.fields.removeLocation"
+        :placeholder="$t('jobs.new.fields.locationsPlaceholder')"
+        :limit-placeholder="$t('jobs.new.fields.locationsLimit')"
+        :disabled="submitting"
+      />
+      <p id="job-locations-hint" class="mt-1 text-xs text-muted">
+        {{ $t('jobs.new.fields.locationsHint', { max: MAX_JOB_LOCATIONS }) }}
+      </p>
+    </div>
 
     <div>
       <div class="flex items-baseline justify-between gap-4">

@@ -119,9 +119,11 @@
         "removeTag": "Usuń tag {tag}",
         "description": "Opis",
         "descriptionPlaceholder": "Co trzeba zrobić, co już masz i jak ma wyglądać efekt końcowy.",
-        "location": "Lokalizacja",
-        "city": "Miasto",
-        "cityPlaceholder": "np. Warszawa",
+        "locations": "Lokalizacje",
+        "locationsPlaceholder": "np. Warszawa",
+        "locationsLimit": "Osiągnięto limit lokalizacji",
+        "locationsHint": "Dodaj co najmniej jedno miasto: wpisz je lub wybierz z podpowiedzi i naciśnij Enter. Maksymalnie {max}.",
+        "removeLocation": "Usuń {value}",
         "budget": "Budżet",
         "budgetAmount": "Kwota budżetu",
         "currency": "Waluta",
@@ -138,11 +140,6 @@
       "errors": {
         "failed": "Nie udało się dodać zlecenia. Spróbuj ponownie."
       }
-    },
-    "location": {
-      "remote": "Zdalnie",
-      "onsite": "Na miejscu",
-      "hybrid": "Hybrydowo"
     },
     "list": {
       "title": "Moje zlecenia",

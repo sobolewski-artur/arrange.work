@@ -23,12 +23,13 @@ service cloud.firestore {
       allow read, write: if isOwner(uid);
     }
 
-    // Basic shape checks for a job (see app/utils/jobs.ts). Jobs moved from the old location
-    // may predate tags, so `tags` is only checked when present.
+    // Basic shape checks for a job (see app/utils/jobs.ts). Older jobs may predate tags and
+    // the multi-city `locations`, so those are only checked when present.
     function isValidJob(job) {
       return job.title is string && job.title.size() > 0 && job.title.size() <= 100
         && job.description is string && job.description.size() <= 5000
         && (!('tags' in job) || (job.tags is list && job.tags.size() <= 5))
+        && (!('locations' in job) || (job.locations is list && job.locations.size() >= 1 && job.locations.size() <= 10))
         && job.status == 'open';
     }
 

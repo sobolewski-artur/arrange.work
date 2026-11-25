@@ -9,9 +9,9 @@ export function useJobFormat() {
     return new Intl.NumberFormat(locale.value, { style: 'currency', currency: budget.currency, maximumFractionDigits: 0 }).format(budget.amount)
   }
 
-  function formatLocation(location: JobLocation) {
-    const mode = t(`jobs.location.${location.mode}`)
-    return location.city ? `${location.city} · ${mode}` : mode
+  /** "Kraków, Warszawa, Gdańsk". */
+  function formatLocations(locations: string[]) {
+    return locations.join(', ')
   }
 
   function formatDate(date: Date) {
@@ -32,5 +32,5 @@ export function useJobFormat() {
     return relativeFormat.value.format(0, 'second')
   }
 
-  return { formatBudget, formatLocation, formatDate, formatRelative }
+  return { formatBudget, formatLocations, formatDate, formatRelative }
 }

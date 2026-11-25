@@ -7,7 +7,7 @@ const { t } = useI18n()
 const localePath = useLocalePath()
 const route = useRoute()
 const user = useCurrentUser()
-const { formatBudget, formatLocation, formatDate } = useJobFormat()
+const { formatBudget, formatLocations, formatDate } = useJobFormat()
 
 const jobId = computed(() => String(route.params.id))
 
@@ -210,8 +210,8 @@ const card = 'rounded-2xl bg-surface p-6 shadow-sm ring-1 ring-line sm:p-8'
               <dd class="mt-0.5 font-semibold">{{ formatBudget(job.budget) }}</dd>
             </div>
             <div>
-              <dt class="text-muted">{{ $t('jobs.new.fields.location') }}</dt>
-              <dd class="mt-0.5 font-semibold">{{ job.location ? formatLocation(job.location) : '—' }}</dd>
+              <dt class="text-muted">{{ $t('jobs.new.fields.locations') }}</dt>
+              <dd class="mt-0.5 font-semibold">{{ job.locations.length ? formatLocations(job.locations) : '—' }}</dd>
             </div>
             <div>
               <dt class="text-muted">{{ $t('jobs.details.posted') }}</dt>

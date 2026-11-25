@@ -13,7 +13,7 @@ const props = defineProps<{
 defineEmits<{ toggleTag: [tag: string] }>()
 
 const localePath = useLocalePath()
-const { formatBudget, formatLocation, formatDate } = useJobFormat()
+const { formatBudget, formatLocations, formatDate } = useJobFormat()
 
 // Long descriptions show two lines with a "Show more" toggle.
 const expanded = ref(false)
@@ -70,12 +70,12 @@ const descriptionId = computed(() => `job-description-${props.job.id}`)
     <div class="mt-4 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
       <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
         <span class="font-medium">{{ formatBudget(job.budget) }}</span>
-        <span v-if="job.location" class="inline-flex items-center gap-1 text-muted">
+        <span v-if="job.locations.length" class="inline-flex items-center gap-1 text-muted">
           <svg class="size-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
             <circle cx="12" cy="10" r="3" />
           </svg>
-          {{ formatLocation(job.location) }}
+          {{ formatLocations(job.locations) }}
         </span>
         <span v-if="job.createdAt" class="text-subtle">
           {{ $t('jobs.list.posted', { date: formatDate(job.createdAt) }) }}
