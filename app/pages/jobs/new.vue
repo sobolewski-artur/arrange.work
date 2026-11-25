@@ -12,6 +12,8 @@ useHead({ title: () => t('jobs.new.title') })
 const title = ref('')
 const category = ref<CategoryKey | ''>('')
 const description = ref('')
+const locationMode = ref<JobLocationMode>('remote')
+const city = ref('')
 const budgetAmount = ref<number | ''>('')
 const currency = ref<JobCurrency>(locale.value === 'pl' ? 'PLN' : 'EUR')
 
@@ -20,8 +22,11 @@ const error = ref<string | null>(null)
 /** Title of the job just posted; switches the page to the confirmation. */
 const postedTitle = ref<string | null>(null)
 
+const needsCity = computed(() => locationMode.value !== 'remote')
+
 const canSubmit = computed(() =>
   !submitting.value && title.value.trim() !== '' && category.value !== '' && description.value.trim() !== ''
+  && (!needsCity.value || city.value.trim() !== '')
 )
 
 async function submit() {
@@ -35,6 +40,7 @@ async function submit() {
       title: title.value.trim(),
       category: category.value,
       description: description.value.trim(),
+      location: { mode: locationMode.value, city: needsCity.value ? city.value.trim() : null },
       budget: amount ? { amount, currency: currency.value } : null
     })
     postedTitle.value = title.value.trim()
@@ -51,6 +57,8 @@ function postAnother() {
   title.value = ''
   category.value = ''
   description.value = ''
+  locationMode.value = 'remote'
+  city.value = ''
   budgetAmount.value = ''
   postedTitle.value = null
 }
@@ -74,8 +82,8 @@ const secondaryButton = 'inline-flex items-center justify-center rounded-lg bg-s
         <h1 class="mt-5 text-2xl font-bold tracking-tight">{{ $t('jobs.new.posted.title') }}</h1>
         <p class="mt-2 text-pretty text-muted">{{ $t('jobs.new.posted.text', { title: postedTitle }) }}</p>
         <div class="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
-          <button type="button" :class="primaryButton" @click="postAnother">{{ $t('jobs.new.posted.another') }}</button>
-          <NuxtLink :to="localePath('/')" :class="secondaryButton">{{ $t('jobs.new.posted.home') }}</NuxtLink>
+          <NuxtLink :to="localePath('/jobs')" :class="primaryButton">{{ $t('jobs.new.posted.viewJobs') }}</NuxtLink>
+          <button type="button" :class="secondaryButton" @click="postAnother">{{ $t('jobs.new.posted.another') }}</button>
         </div>
       </div>
 
@@ -115,6 +123,39 @@ const secondaryButton = 'inline-flex items-center justify-center rounded-lg bg-s
               </option>
             </select>
           </div>
+
+          <fieldset>
+            <legend class="text-sm font-medium">{{ $t('jobs.new.fields.location') }}</legend>
+            <div class="mt-1 grid grid-cols-3 gap-1 rounded-lg bg-well p-1">
+              <label
+                v-for="mode in JOB_LOCATION_MODES"
+                :key="mode"
+                class="relative flex cursor-pointer items-center justify-center gap-1.5 rounded-md px-2 py-2 text-center text-sm font-medium text-muted transition-colors hover:text-fg has-checked:bg-surface has-checked:text-fg has-checked:shadow-sm has-focus-visible:outline-2 has-focus-visible:outline-fg has-disabled:cursor-not-allowed has-disabled:opacity-60"
+              >
+                <input v-model="locationMode" type="radio" name="location-mode" :value="mode" :disabled="submitting" class="sr-only">
+                {{ $t(`jobs.location.${mode}`) }}
+              </label>
+            </div>
+            <div v-if="needsCity" class="mt-3">
+              <label for="job-city" class="block text-sm font-medium">{{ $t('jobs.new.fields.city') }}</label>
+              <input
+                id="job-city"
+                v-model="city"
+                type="text"
+                list="job-city-suggestions"
+                autocomplete="address-level2"
+                required
+                pattern=".*\S.*"
+                :maxlength="MAX_JOB_CITY_LENGTH"
+                :placeholder="$t('jobs.new.fields.cityPlaceholder')"
+                :disabled="submitting"
+                :class="inputClass"
+              >
+              <datalist id="job-city-suggestions">
+                <option v-for="c in SUGGESTED_CITIES" :key="c" :value="c" />
+              </datalist>
+            </div>
+          </fieldset>
 
           <div>
             <div class="flex items-baseline justify-between gap-4">

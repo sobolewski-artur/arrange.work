@@ -6,6 +6,7 @@
     "howItWorks": "Jak to działa",
     "about": "O nas",
     "account": "Konto",
+    "myJobs": "Moje zlecenia",
     "menu": "Menu",
     "openMenu": "Otwórz menu",
     "closeMenu": "Zamknij menu"
@@ -105,6 +106,9 @@
         "categoryPlaceholder": "Wybierz kategorię",
         "description": "Opis",
         "descriptionPlaceholder": "Co trzeba zrobić, co już masz i jak ma wyglądać efekt końcowy.",
+        "location": "Lokalizacja",
+        "city": "Miasto",
+        "cityPlaceholder": "np. Warszawa",
         "budget": "Budżet",
         "budgetAmount": "Kwota budżetu",
         "currency": "Waluta",
@@ -114,11 +118,39 @@
       "posted": {
         "title": "Zlecenie zostało dodane",
         "text": "Zapisaliśmy „{title}”.",
+        "viewJobs": "Zobacz moje zlecenia",
         "another": "Dodaj kolejne zlecenie",
         "home": "Wróć na stronę główną"
       },
       "errors": {
         "failed": "Nie udało się dodać zlecenia. Spróbuj ponownie."
+      }
+    },
+    "location": {
+      "remote": "Zdalnie",
+      "onsite": "Na miejscu",
+      "hybrid": "Hybrydowo"
+    },
+    "list": {
+      "title": "Moje zlecenia",
+      "subtitle": "Twoje dodane zlecenia, od najnowszych.",
+      "empty": {
+        "title": "Brak zleceń",
+        "text": "Dodaj pierwsze zlecenie i opisz, co trzeba zrobić."
+      },
+      "status": {
+        "open": "Otwarte"
+      },
+      "noBudget": "Bez podanego budżetu",
+      "posted": "Dodano {date}",
+      "pagination": "Stronicowanie",
+      "range": "{from}–{to} z {total}",
+      "page": "Strona {page} z {pages}",
+      "previous": "Poprzednia",
+      "next": "Następna",
+      "errors": {
+        "load": "Nie udało się wczytać zleceń.",
+        "retry": "Spróbuj ponownie"
       }
     }
   },

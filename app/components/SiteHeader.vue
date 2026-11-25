@@ -9,10 +9,15 @@ const initial = computed(() => (user.value?.displayName || user.value?.email || 
 const links = computed(() => [
   { to: localePath({ path: '/', hash: '#how-it-works' }), label: t('nav.howItWorks') },
   { to: localePath('/about'), label: t('nav.about') },
-  ...(user.value ? [{ to: localePath('/jobs/new'), label: t('home.cta.postJob') }] : [])
+  ...(user.value
+    ? [
+        { to: localePath('/jobs'), label: t('nav.myJobs') },
+        { to: localePath('/jobs/new'), label: t('home.cta.postJob') }
+      ]
+    : [])
 ])
 
-// --- Mobile menu (below md) ---
+// --- Mobile menu (below lg, where the links don't fit beside the switches) ---
 
 const header = ref<HTMLElement | null>(null)
 const menuButton = ref<HTMLButtonElement | null>(null)
@@ -63,15 +68,15 @@ const menuLink = 'block rounded-lg px-3 py-2.5 text-base font-medium transition-
         arrange.work
       </NuxtLink>
 
-      <nav :aria-label="$t('nav.label')" class="hidden items-center text-sm md:flex">
+      <nav :aria-label="$t('nav.label')" class="hidden items-center text-sm lg:flex">
         <NuxtLink v-for="link in links" :key="link.to" :to="link.to" :class="navLink" exact-active-class="!text-fg">
           {{ link.label }}
         </NuxtLink>
       </nav>
 
       <div class="ml-auto flex items-center gap-2">
-        <!-- Below md, both switches live in the menu. -->
-        <div class="hidden items-center gap-2 md:flex">
+        <!-- Below lg, both switches live in the menu. -->
+        <div class="hidden items-center gap-2 lg:flex">
           <LanguageSwitcher />
           <ThemeToggle />
         </div>
@@ -118,7 +123,7 @@ const menuLink = 'block rounded-lg px-3 py-2.5 text-base font-medium transition-
         <button
           ref="menuButton"
           type="button"
-          class="-mr-1 flex size-10 items-center justify-center rounded-lg text-fg transition hover:bg-hover focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-fg md:hidden"
+          class="-mr-1 flex size-10 items-center justify-center rounded-lg text-fg transition hover:bg-hover focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-fg lg:hidden"
           :aria-expanded="menuOpen"
           aria-controls="site-menu"
           :aria-label="menuOpen ? $t('nav.closeMenu') : $t('nav.openMenu')"
@@ -141,7 +146,7 @@ const menuLink = 'block rounded-lg px-3 py-2.5 text-base font-medium transition-
       <div
         v-show="menuOpen"
         id="site-menu"
-        class="absolute inset-x-0 top-full max-h-[calc(100dvh-4rem)] overflow-y-auto border-b border-line bg-page shadow-lg md:hidden"
+        class="absolute inset-x-0 top-full max-h-[calc(100dvh-4rem)] overflow-y-auto border-b border-line bg-page shadow-lg lg:hidden"
       >
         <div class="mx-auto max-w-6xl px-4 py-3 sm:px-6">
           <nav :aria-label="$t('nav.menu')">

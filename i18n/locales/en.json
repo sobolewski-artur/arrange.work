@@ -6,6 +6,7 @@
     "howItWorks": "How it works",
     "about": "About",
     "account": "Account",
+    "myJobs": "My jobs",
     "menu": "Menu",
     "openMenu": "Open menu",
     "closeMenu": "Close menu"
@@ -105,6 +106,9 @@
         "categoryPlaceholder": "Choose a category",
         "description": "Description",
         "descriptionPlaceholder": "What needs to be done, what you already have and what the result should look like.",
+        "location": "Location",
+        "city": "City",
+        "cityPlaceholder": "e.g. Warszawa",
         "budget": "Budget",
         "budgetAmount": "Budget amount",
         "currency": "Currency",
@@ -114,11 +118,39 @@
       "posted": {
         "title": "Your job has been posted",
         "text": "We have saved “{title}”.",
+        "viewJobs": "View my jobs",
         "another": "Post another job",
         "home": "Back to home"
       },
       "errors": {
         "failed": "Couldn't post your job. Please try again."
+      }
+    },
+    "location": {
+      "remote": "Remote",
+      "onsite": "On-site",
+      "hybrid": "Hybrid"
+    },
+    "list": {
+      "title": "My jobs",
+      "subtitle": "Jobs you have posted, newest first.",
+      "empty": {
+        "title": "No jobs yet",
+        "text": "Post your first job and describe what you need done."
+      },
+      "status": {
+        "open": "Open"
+      },
+      "noBudget": "No budget given",
+      "posted": "Posted {date}",
+      "pagination": "Pagination",
+      "range": "{from}–{to} of {total}",
+      "page": "Page {page} of {pages}",
+      "previous": "Previous",
+      "next": "Next",
+      "errors": {
+        "load": "Couldn't load your jobs.",
+        "retry": "Try again"
       }
     }
   },
