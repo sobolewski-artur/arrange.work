@@ -200,12 +200,33 @@
       "posted": "Dodano",
       "applications": {
         "title": "Zgłoszenia",
-        "empty": "Brak zgłoszeń."
+        "empty": "Brak zgłoszeń.",
+        "summary": "Oczekujące: {pending} · zaakceptowane: {accepted} · odrzucone: {rejected}",
+        "accept": "Zaakceptuj",
+        "reject": "Odrzuć",
+        "undo": "Cofnij",
+        "acceptFrom": "Zaakceptuj zgłoszenie od {name}",
+        "rejectFrom": "Odrzuć zgłoszenie od {name}",
+        "undoFor": "Cofnij decyzję dla {name}"
       },
       "applied": {
-        "title": "Wysłano zgłoszenie",
+        "title": {
+          "pending": "Wysłano zgłoszenie",
+          "accepted": "Zgłoszenie zaakceptowane",
+          "rejected": "Zgłoszenie odrzucone"
+        },
+        "text": {
+          "pending": "Czekasz na decyzję klienta.",
+          "accepted": "Klient zaakceptował Twoje zgłoszenie i skontaktuje się z Tobą e-mailem.",
+          "rejected": "Klient odrzucił Twoje zgłoszenie."
+        },
         "on": "Wysłano {date}.",
         "shared": "Klient widzi Twoją nazwę, e-mail i wiadomość."
+      },
+      "status": {
+        "pending": "Oczekuje",
+        "accepted": "Zaakceptowane",
+        "rejected": "Odrzucone"
       },
       "withdraw": "Wycofaj zgłoszenie",
       "confirmWithdraw": "Wycofać zgłoszenie? Klient przestanie je widzieć.",
@@ -223,7 +244,8 @@
         "load": "Nie udało się wczytać zlecenia.",
         "apply": "Nie udało się wysłać zgłoszenia. Spróbuj ponownie.",
         "withdraw": "Nie udało się wycofać zgłoszenia. Spróbuj ponownie.",
-        "applications": "Nie udało się wczytać zgłoszeń."
+        "applications": "Nie udało się wczytać zgłoszeń.",
+        "decide": "Nie udało się zapisać decyzji. Spróbuj ponownie."
       }
     },
     "browse": {

@@ -200,12 +200,33 @@
       "posted": "Posted",
       "applications": {
         "title": "Applications",
-        "empty": "No applications yet."
+        "empty": "No applications yet.",
+        "summary": "{pending} pending · {accepted} accepted · {rejected} rejected",
+        "accept": "Accept",
+        "reject": "Reject",
+        "undo": "Undo",
+        "acceptFrom": "Accept application from {name}",
+        "rejectFrom": "Reject application from {name}",
+        "undoFor": "Undo decision for {name}"
       },
       "applied": {
-        "title": "You've applied",
+        "title": {
+          "pending": "You've applied",
+          "accepted": "Application accepted",
+          "rejected": "Application declined"
+        },
+        "text": {
+          "pending": "Waiting for the client's decision.",
+          "accepted": "The client accepted your application and will contact you by email.",
+          "rejected": "The client declined your application."
+        },
         "on": "Sent {date}.",
         "shared": "The client can see your name, email and message."
+      },
+      "status": {
+        "pending": "Pending",
+        "accepted": "Accepted",
+        "rejected": "Rejected"
       },
       "withdraw": "Withdraw application",
       "confirmWithdraw": "Withdraw your application? The client will no longer see it.",
@@ -223,7 +244,8 @@
         "load": "Couldn't load this job.",
         "apply": "Couldn't send your application. Please try again.",
         "withdraw": "Couldn't withdraw your application. Please try again.",
-        "applications": "Couldn't load applications."
+        "applications": "Couldn't load applications.",
+        "decide": "Couldn't save your decision. Please try again."
       }
     },
     "browse": {

@@ -10,6 +10,7 @@ import {
   query,
   serverTimestamp,
   setDoc,
+  updateDoc,
   type DocumentData,
   type Timestamp
 } from 'firebase/firestore'
@@ -23,13 +24,19 @@ export const MAX_LISTED_APPLICATIONS = 100
  * (so each user can apply once per job). The applicant's name and email are shared with the
  * job's owner; firestore.rules lets only the applicant and the owner read it.
  */
+export const APPLICATION_STATUSES = ['pending', 'accepted', 'rejected'] as const
+export type ApplicationStatus = typeof APPLICATION_STATUSES[number]
+
 export interface Application {
   applicant: string
   name: string
   email: string
   message: string
-  status: 'pending'
+  /** Set by the job's owner; new applications are 'pending'. */
+  status: ApplicationStatus
   createdAt: Date | null
+  /** When the owner accepted or rejected it; null while pending. */
+  decidedAt: Date | null
 }
 
 function applicationsCollection(jobId: string) {
@@ -42,8 +49,9 @@ function applicationFromData(data: DocumentData): Application {
     name: data.name,
     email: data.email,
     message: data.message,
-    status: data.status,
-    createdAt: (data.createdAt as Timestamp | null)?.toDate() ?? null
+    status: (APPLICATION_STATUSES as readonly string[]).includes(data.status) ? data.status : 'pending',
+    createdAt: (data.createdAt as Timestamp | null)?.toDate() ?? null,
+    decidedAt: (data.decidedAt as Timestamp | null)?.toDate() ?? null
   }
 }
 
@@ -73,6 +81,17 @@ export async function withdrawApplication(user: User, jobId: string) {
 export async function fetchApplications(jobId: string) {
   const snapshot = await getDocs(query(applicationsCollection(jobId), orderBy('createdAt', 'asc'), limit(MAX_LISTED_APPLICATIONS)))
   return snapshot.docs.map(d => applicationFromData(d.data({ serverTimestamps: 'estimate' })))
+}
+
+/**
+ * Accepts or rejects an application (or puts it back to pending). Only the job's owner may;
+ * the rules allow changing nothing but `status` and `decidedAt`.
+ */
+export async function setApplicationStatus(jobId: string, applicantId: string, status: ApplicationStatus) {
+  await updateDoc(doc(applicationsCollection(jobId), applicantId), {
+    status,
+    decidedAt: status === 'pending' ? null : serverTimestamp()
+  })
 }
 
 /** Deletes all applications to a job (used before deleting the job itself). */

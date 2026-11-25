@@ -58,6 +58,38 @@ watch([user, jobId], ([u]) => {
   if (u) load()
 }, { immediate: true })
 
+// --- Owner: accepting and rejecting applications ---
+
+const decidingId = ref<string | null>(null)
+const decideError = ref<{ id: string, message: string } | null>(null)
+
+async function decide(application: Application, status: ApplicationStatus) {
+  if (!job.value || decidingId.value) return
+  decidingId.value = application.applicant
+  decideError.value = null
+  try {
+    await setApplicationStatus(job.value.id, application.applicant, status)
+    applications.value = applications.value.map(a => a.applicant === application.applicant
+      ? { ...a, status, decidedAt: status === 'pending' ? null : new Date() }
+      : a)
+  } catch (e) {
+    console.error(e)
+    decideError.value = { id: application.applicant, message: t('jobs.details.errors.decide') }
+  } finally {
+    decidingId.value = null
+  }
+}
+
+const statusCounts = computed(() => Object.fromEntries(
+  APPLICATION_STATUSES.map(status => [status, applications.value.filter(a => a.status === status).length])
+) as Record<ApplicationStatus, number>)
+
+const statusBadge: Record<ApplicationStatus, string> = {
+  pending: 'bg-well text-muted',
+  accepted: 'bg-success-soft text-success ring-1 ring-success-line',
+  rejected: 'bg-danger-soft text-danger ring-1 ring-danger-line'
+}
+
 // --- Applying ---
 
 const formOpen = ref(false)
@@ -207,6 +239,10 @@ const card = 'rounded-2xl bg-surface p-6 shadow-sm ring-1 ring-line sm:p-8'
             </NuxtLink>
           </div>
 
+          <p v-if="applicationsState === 'ready' && applications.length > 0" class="mt-1 text-sm text-muted">
+            {{ $t('jobs.details.applications.summary', statusCounts) }}
+          </p>
+
           <p v-if="applicationsState === 'loading'" class="mt-4 text-sm text-muted">{{ $t('auth.pending') }}</p>
           <div v-else-if="applicationsState === 'failed'" role="alert" class="mt-4 flex flex-wrap items-center gap-3 text-sm text-danger">
             {{ $t('jobs.details.errors.applications') }}
@@ -215,12 +251,52 @@ const card = 'rounded-2xl bg-surface p-6 shadow-sm ring-1 ring-line sm:p-8'
           <p v-else-if="applications.length === 0" class="mt-4 text-sm text-muted">{{ $t('jobs.details.applications.empty') }}</p>
           <ul v-else class="mt-4 divide-y divide-line">
             <li v-for="application in applications" :key="application.applicant" class="py-4 first:pt-0 last:pb-0">
-              <div class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+              <div class="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
                 <p class="font-medium break-words">{{ application.name }}</p>
-                <p v-if="application.createdAt" class="text-xs text-subtle">{{ formatDate(application.createdAt) }}</p>
+                <div class="flex items-center gap-2">
+                  <span v-if="application.createdAt" class="text-xs text-subtle">{{ formatDate(application.createdAt) }}</span>
+                  <span class="rounded-full px-2.5 py-0.5 text-xs font-medium" :class="statusBadge[application.status]">
+                    {{ $t(`jobs.details.status.${application.status}`) }}
+                  </span>
+                </div>
               </div>
               <a :href="`mailto:${application.email}`" class="text-sm break-all text-muted underline-offset-4 hover:text-fg hover:underline">{{ application.email }}</a>
               <p class="mt-2 text-sm break-words whitespace-pre-line">{{ application.message }}</p>
+
+              <div class="mt-3 flex flex-wrap items-center gap-2">
+                <template v-if="application.status === 'pending'">
+                  <button
+                    type="button"
+                    class="rounded-lg bg-primary px-3 py-1.5 text-sm font-medium text-on-primary transition hover:bg-primary-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-fg disabled:opacity-60"
+                    :aria-label="$t('jobs.details.applications.acceptFrom', { name: application.name })"
+                    :disabled="decidingId !== null"
+                    @click="decide(application, 'accepted')"
+                  >
+                    {{ $t('jobs.details.applications.accept') }}
+                  </button>
+                  <button
+                    type="button"
+                    class="rounded-lg bg-surface px-3 py-1.5 text-sm font-medium text-danger ring-1 ring-line-strong transition hover:bg-danger-soft focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-fg disabled:opacity-60"
+                    :aria-label="$t('jobs.details.applications.rejectFrom', { name: application.name })"
+                    :disabled="decidingId !== null"
+                    @click="decide(application, 'rejected')"
+                  >
+                    {{ $t('jobs.details.applications.reject') }}
+                  </button>
+                </template>
+                <button
+                  v-else
+                  type="button"
+                  class="text-sm font-medium text-muted underline-offset-4 hover:text-fg hover:underline disabled:opacity-60"
+                  :aria-label="$t('jobs.details.applications.undoFor', { name: application.name })"
+                  :disabled="decidingId !== null"
+                  @click="decide(application, 'pending')"
+                >
+                  {{ $t('jobs.details.applications.undo') }}
+                </button>
+                <span v-if="decidingId === application.applicant" class="text-sm text-muted" aria-live="polite">{{ $t('auth.pending') }}</span>
+              </div>
+              <p v-if="decideError?.id === application.applicant" role="alert" class="mt-2 text-sm text-danger">{{ decideError.message }}</p>
             </li>
           </ul>
         </section>
@@ -230,14 +306,28 @@ const card = 'rounded-2xl bg-surface p-6 shadow-sm ring-1 ring-line sm:p-8'
           <!-- Already applied -->
           <template v-if="myApplication">
             <div class="flex items-start gap-3">
-              <span class="flex size-9 shrink-0 items-center justify-center rounded-full bg-success-soft text-success ring-1 ring-success-line">
+              <span
+                class="flex size-9 shrink-0 items-center justify-center rounded-full"
+                :class="myApplication.status === 'rejected' ? 'bg-danger-soft text-danger ring-1 ring-danger-line' : myApplication.status === 'accepted' ? 'bg-success-soft text-success ring-1 ring-success-line' : 'bg-well text-muted'"
+              >
                 <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                  <path d="M20 6 9 17l-5-5" />
+                  <path v-if="myApplication.status === 'rejected'" d="M18 6 6 18M6 6l12 12" />
+                  <path v-else-if="myApplication.status === 'accepted'" d="M20 6 9 17l-5-5" />
+                  <template v-else>
+                    <circle cx="12" cy="12" r="9" />
+                    <path d="M12 7v5l3 2" />
+                  </template>
                 </svg>
               </span>
               <div class="min-w-0">
-                <h2 id="apply-title" class="text-lg font-semibold">{{ $t('jobs.details.applied.title') }}</h2>
-                <p class="text-sm text-muted">
+                <div class="flex flex-wrap items-center gap-2">
+                  <h2 id="apply-title" class="text-lg font-semibold">{{ $t(`jobs.details.applied.title.${myApplication.status}`) }}</h2>
+                  <span class="rounded-full px-2.5 py-0.5 text-xs font-medium" :class="statusBadge[myApplication.status]">
+                    {{ $t(`jobs.details.status.${myApplication.status}`) }}
+                  </span>
+                </div>
+                <p class="text-sm text-muted">{{ $t(`jobs.details.applied.text.${myApplication.status}`) }}</p>
+                <p class="mt-1 text-xs text-subtle">
                   {{ myApplication.createdAt ? $t('jobs.details.applied.on', { date: formatDate(myApplication.createdAt) }) : '' }}
                   {{ $t('jobs.details.applied.shared') }}
                 </p>
