@@ -2,8 +2,9 @@
 import type { Unsubscribe } from 'firebase/firestore'
 
 /**
- * Bell with an unread count for new applications to the user's jobs, and a dropdown listing
- * them. Opening the dropdown marks everything as seen. Render only for a signed-in user.
+ * Bell with an unread count and a dropdown of notifications: new applications to the user's
+ * jobs, and decisions on their own applications. Opening the dropdown marks everything as
+ * seen. Render only for a signed-in user.
  */
 const { t } = useI18n()
 const localePath = useLocalePath()
@@ -11,7 +12,7 @@ const route = useRoute()
 const user = useCurrentUser()
 const { formatRelative } = useJobFormat()
 
-const notifications = shallowRef<ApplicationNotification[]>([])
+const notifications = shallowRef<AppNotification[]>([])
 const seenAt = ref<Date | null>(null)
 const failed = ref(false)
 
@@ -27,7 +28,7 @@ watch(user, (u) => {
   seenAt.value = null
   if (!u) return
   stops = [
-    watchApplicationNotifications(u, (list) => {
+    watchNotifications(u, (list) => {
       notifications.value = list
       failed.value = false
     }, (e) => {
@@ -39,8 +40,14 @@ watch(user, (u) => {
 }, { immediate: true })
 onBeforeUnmount(stopListening)
 
-function isUnread(n: ApplicationNotification, since: Date | null) {
-  return !since || (n.createdAt !== null && n.createdAt > since)
+function isUnread(n: AppNotification, since: Date | null) {
+  return !since || (n.at !== null && n.at > since)
+}
+
+const kindIcon: Record<NotificationKind, string> = {
+  applied: 'bg-well text-muted',
+  accepted: 'bg-success-soft text-success',
+  rejected: 'bg-danger-soft text-danger'
 }
 
 const unreadCount = computed(() => notifications.value.filter(n => isUnread(n, seenAt.value)).length)
@@ -127,9 +134,10 @@ const buttonLabel = computed(() => unreadCount.value
           <h2 class="text-sm font-semibold">{{ $t('notifications.title') }}</h2>
         </div>
 
-        <p v-if="failed" class="px-4 py-6 text-sm text-danger">{{ $t('notifications.error') }}</p>
-        <p v-else-if="notifications.length === 0" class="px-4 py-8 text-center text-sm text-muted">{{ $t('notifications.empty') }}</p>
-        <ul v-else class="max-h-[min(24rem,calc(100dvh-8rem))] divide-y divide-line overflow-y-auto">
+        <!-- One of the two feeds can fail (e.g. while an index builds); show what loaded. -->
+        <p v-if="failed" class="border-b border-line px-4 py-3 text-sm text-danger">{{ $t('notifications.error') }}</p>
+        <p v-if="notifications.length === 0 && !failed" class="px-4 py-8 text-center text-sm text-muted">{{ $t('notifications.empty') }}</p>
+        <ul v-if="notifications.length > 0" class="max-h-[min(24rem,calc(100dvh-8rem))] divide-y divide-line overflow-y-auto">
           <li v-for="n in notifications" :key="n.id">
             <NuxtLink
               :to="localePath(`/jobs/${n.jobId}`)"
@@ -141,14 +149,28 @@ const buttonLabel = computed(() => unreadCount.value
                 :class="isUnread(n, highlightSince) ? 'bg-danger' : 'bg-transparent'"
                 aria-hidden="true"
               />
+              <span class="flex size-7 shrink-0 items-center justify-center rounded-full" :class="kindIcon[n.kind]" aria-hidden="true">
+                <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <path v-if="n.kind === 'accepted'" d="M20 6 9 17l-5-5" />
+                  <path v-else-if="n.kind === 'rejected'" d="M18 6 6 18M6 6l12 12" />
+                  <template v-else>
+                    <circle cx="12" cy="8" r="4" />
+                    <path d="M4 21v-1a6 6 0 0 1 12 0v1M19 8v6M16 11h6" />
+                  </template>
+                </svg>
+              </span>
               <span class="min-w-0">
                 <span class="block break-words">
-                  <i18n-t keypath="notifications.applied" scope="global">
+                  <i18n-t v-if="n.kind === 'applied'" keypath="notifications.applied" scope="global">
                     <template #name><strong class="font-semibold">{{ n.name }}</strong></template>
                     <template #job><strong class="font-semibold">{{ n.jobTitle }}</strong></template>
                   </i18n-t>
+                  <i18n-t v-else-if="n.jobTitle" :keypath="`notifications.${n.kind}`" scope="global">
+                    <template #job><strong class="font-semibold">{{ n.jobTitle }}</strong></template>
+                  </i18n-t>
+                  <template v-else>{{ $t(`notifications.${n.kind}NoTitle`) }}</template>
                 </span>
-                <span v-if="n.createdAt" class="mt-0.5 block text-xs text-subtle">{{ formatRelative(n.createdAt) }}</span>
+                <span v-if="n.at" class="mt-0.5 block text-xs text-subtle">{{ formatRelative(n.at) }}</span>
                 <span v-if="isUnread(n, highlightSince)" class="sr-only">{{ $t('notifications.unread') }}</span>
               </span>
             </NuxtLink>

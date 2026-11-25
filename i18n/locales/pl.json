@@ -305,9 +305,13 @@
     "title": "Powiadomienia",
     "label": "Powiadomienia",
     "labelUnread": "Powiadomienia, nieprzeczytane: {count}",
-    "empty": "Brak powiadomień. Tutaj zobaczysz nowe zgłoszenia do Twoich zleceń.",
+    "empty": "Brak powiadomień. Tutaj pojawią się nowe zgłoszenia do Twoich zleceń i decyzje w sprawie Twoich zgłoszeń.",
     "error": "Nie udało się wczytać powiadomień.",
     "applied": "{name} zgłasza się do zlecenia {job}",
+    "accepted": "Twoje zgłoszenie do zlecenia {job} zostało zaakceptowane",
+    "rejected": "Twoje zgłoszenie do zlecenia {job} zostało odrzucone",
+    "acceptedNoTitle": "Twoje zgłoszenie zostało zaakceptowane",
+    "rejectedNoTitle": "Twoje zgłoszenie zostało odrzucone",
     "unread": "Nieprzeczytane"
   },
   "about": {

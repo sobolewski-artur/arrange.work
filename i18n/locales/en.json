@@ -305,9 +305,13 @@
     "title": "Notifications",
     "label": "Notifications",
     "labelUnread": "Notifications, {count} unread",
-    "empty": "No notifications yet. You'll see new applications to your jobs here.",
+    "empty": "No notifications yet. New applications to your jobs and decisions on your applications will appear here.",
     "error": "Couldn't load notifications.",
     "applied": "{name} applied to {job}",
+    "accepted": "Your application to {job} was accepted",
+    "rejected": "Your application to {job} was declined",
+    "acceptedNoTitle": "Your application was accepted",
+    "rejectedNoTitle": "Your application was declined",
     "unread": "Unread"
   },
   "about": {
