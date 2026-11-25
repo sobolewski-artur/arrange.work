@@ -32,6 +32,12 @@ service cloud.firestore {
         && job.status == 'open';
     }
 
+    // "My applications": collection-group queries over every job's applications, allowed only
+    // when filtered to your own (applicant == your uid). Per-job access is in /jobs below.
+    match /{path=**}/applications/{applicationId} {
+      allow list: if isVerified() && resource.data.applicant == request.auth.uid;
+    }
+
     // Jobs: one top-level collection, each job with an `owner` field holding the poster's uid.
     // Any verified user can read open jobs ("Find work"); the owner can also read their own
     // jobs in any status. Only the owner can change or delete a job.

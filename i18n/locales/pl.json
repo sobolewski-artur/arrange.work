@@ -7,6 +7,7 @@
     "about": "O nas",
     "account": "Konto",
     "findWork": "Znajdź zlecenia",
+    "myApplications": "Moje zgłoszenia",
     "myJobs": "Moje zlecenia",
     "menu": "Menu",
     "openMenu": "Otwórz menu",
@@ -271,6 +272,33 @@
         "load": "Nie udało się wczytać zlecenia.",
         "failed": "Nie udało się zapisać zmian. Spróbuj ponownie."
       }
+    }
+  },
+  "applications": {
+    "title": "Moje zgłoszenia",
+    "subtitle": "Zlecenia, do których wysłano Twoje zgłoszenia.",
+    "filter": "Filtruj według statusu",
+    "tabs": {
+      "all": "Wszystkie",
+      "pending": "Oczekujące",
+      "accepted": "Zaakceptowane",
+      "rejected": "Odrzucone"
+    },
+    "empty": {
+      "all": "Brak zgłoszeń",
+      "text": "Znajdź zlecenie pasujące do Twoich umiejętności i zgłoś się.",
+      "pending": "Brak oczekujących zgłoszeń",
+      "accepted": "Brak zaakceptowanych zgłoszeń",
+      "rejected": "Brak odrzuconych zgłoszeń"
+    },
+    "jobGone": "To zlecenie nie jest już dostępne",
+    "decided": {
+      "accepted": "Zaakceptowano {date}.",
+      "rejected": "Odrzucono {date}."
+    },
+    "viewAll": "Wszystkie moje zgłoszenia",
+    "errors": {
+      "load": "Nie udało się wczytać zgłoszeń."
     }
   },
   "about": {

@@ -7,6 +7,7 @@
     "about": "About",
     "account": "Account",
     "findWork": "Find work",
+    "myApplications": "My applications",
     "myJobs": "My jobs",
     "menu": "Menu",
     "openMenu": "Open menu",
@@ -271,6 +272,33 @@
         "load": "Couldn't load this job.",
         "failed": "Couldn't save your changes. Please try again."
       }
+    }
+  },
+  "applications": {
+    "title": "My applications",
+    "subtitle": "Jobs you've applied to.",
+    "filter": "Filter by status",
+    "tabs": {
+      "all": "All",
+      "pending": "Pending",
+      "accepted": "Accepted",
+      "rejected": "Rejected"
+    },
+    "empty": {
+      "all": "No applications yet",
+      "text": "Find a job that fits your skills and apply.",
+      "pending": "No pending applications",
+      "accepted": "No accepted applications yet",
+      "rejected": "No rejected applications"
+    },
+    "jobGone": "This job is no longer available",
+    "decided": {
+      "accepted": "Accepted {date}.",
+      "rejected": "Declined {date}."
+    },
+    "viewAll": "All my applications",
+    "errors": {
+      "load": "Couldn't load your applications."
     }
   },
   "about": {

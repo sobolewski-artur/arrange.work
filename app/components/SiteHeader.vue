@@ -6,17 +6,20 @@ const user = useCurrentUser()
 
 const initial = computed(() => (user.value?.displayName || user.value?.email || '?').trim().charAt(0).toUpperCase())
 
-const links = computed(() => [
-  { to: localePath({ path: '/', hash: '#how-it-works' }), label: t('nav.howItWorks') },
-  { to: localePath('/about'), label: t('nav.about') },
-  ...(user.value
-    ? [
-        { to: localePath('/find-work'), label: t('nav.findWork') },
-        { to: localePath('/jobs'), label: t('nav.myJobs') },
-        { to: localePath('/jobs/new'), label: t('home.cta.postJob') }
-      ]
-    : [])
-])
+// Signed-in users get the app pages instead of "How it works" (still in the footer), which
+// keeps the bar from overflowing: specialist pages first, then client pages.
+const links = computed(() => user.value
+  ? [
+      { to: localePath('/find-work'), label: t('nav.findWork') },
+      { to: localePath('/applications'), label: t('nav.myApplications') },
+      { to: localePath('/jobs'), label: t('nav.myJobs') },
+      { to: localePath('/jobs/new'), label: t('home.cta.postJob') },
+      { to: localePath('/about'), label: t('nav.about') }
+    ]
+  : [
+      { to: localePath({ path: '/', hash: '#how-it-works' }), label: t('nav.howItWorks') },
+      { to: localePath('/about'), label: t('nav.about') }
+    ])
 
 // --- Mobile menu (below lg, where the links don't fit beside the switches) ---
 

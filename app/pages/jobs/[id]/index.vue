@@ -335,10 +335,13 @@ const card = 'rounded-2xl bg-surface p-6 shadow-sm ring-1 ring-line sm:p-8'
             </div>
             <blockquote class="mt-4 rounded-xl bg-well p-4 text-sm break-words whitespace-pre-line">{{ myApplication.message }}</blockquote>
 
-            <div v-if="!confirmingWithdraw" class="mt-4">
+            <div v-if="!confirmingWithdraw" class="mt-4 flex flex-wrap items-center justify-between gap-3">
               <button type="button" class="text-sm font-medium text-muted underline-offset-4 hover:text-danger hover:underline" @click="confirmingWithdraw = true">
                 {{ $t('jobs.details.withdraw') }}
               </button>
+              <NuxtLink :to="localePath('/applications')" class="text-sm font-medium underline-offset-4 hover:underline">
+                {{ $t('applications.viewAll') }} →
+              </NuxtLink>
             </div>
             <div v-else class="mt-4 flex flex-col gap-3 rounded-xl bg-danger-soft p-3 ring-1 ring-danger-line sm:flex-row sm:items-center sm:justify-between">
               <p class="text-sm text-danger">{{ withdrawError ?? $t('jobs.details.confirmWithdraw') }}</p>

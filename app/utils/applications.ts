@@ -1,8 +1,10 @@
 import type { User } from 'firebase/auth'
 import {
   collection,
+  collectionGroup,
   deleteDoc,
   doc,
+  getCountFromServer,
   getDoc,
   getDocs,
   limit,
@@ -10,8 +12,11 @@ import {
   query,
   serverTimestamp,
   setDoc,
+  startAfter,
   updateDoc,
+  where,
   type DocumentData,
+  type QueryDocumentSnapshot,
   type Timestamp
 } from 'firebase/firestore'
 
@@ -92,6 +97,63 @@ export async function setApplicationStatus(jobId: string, applicantId: string, s
     status,
     decidedAt: status === 'pending' ? null : serverTimestamp()
   })
+}
+
+// --- "My applications": the user's applications across all jobs ---
+
+/** An application together with the job it's for (null if the job is gone or not visible). */
+export interface MyApplication {
+  jobId: string
+  application: Application
+  job: Job | null
+}
+
+/** Opaque position in the list, passed back to fetch the page after it. */
+export type ApplicationCursor = QueryDocumentSnapshot
+
+/**
+ * Collection-group query over every job's applications, filtered to the user (required by the
+ * rules) and optionally a status, newest first. Needs the COLLECTION_GROUP indexes in
+ * firestore.indexes.json.
+ */
+function myApplicationsQuery(user: User, status: ApplicationStatus | null) {
+  return query(
+    collectionGroup(useFirestore(), 'applications'),
+    where('applicant', '==', user.uid),
+    ...(status ? [where('status', '==', status)] : []),
+    orderBy('createdAt', 'desc')
+  )
+}
+
+/**
+ * One page of the user's applications (optionally only one status), each with its job loaded.
+ * Fetches one extra document to know whether another page exists.
+ */
+export async function fetchMyApplications(
+  user: User,
+  pageSize: number,
+  after: ApplicationCursor | null = null,
+  status: ApplicationStatus | null = null
+) {
+  const snapshot = await getDocs(query(
+    myApplicationsQuery(user, status),
+    ...(after ? [startAfter(after)] : []),
+    limit(pageSize + 1)
+  ))
+  const docs = snapshot.docs.slice(0, pageSize)
+  const items: MyApplication[] = await Promise.all(docs.map(async (d) => {
+    // Path is jobs/{jobId}/applications/{uid}.
+    const jobId = d.ref.parent.parent!.id
+    const job = await fetchJob(jobId).catch(() => null)
+    return { jobId, application: applicationFromData(d.data({ serverTimestamps: 'estimate' })), job }
+  }))
+  return { items, cursor: docs.at(-1) ?? null, hasMore: snapshot.size > pageSize }
+}
+
+/** Number of the user's applications, optionally only one status. */
+export async function countMyApplications(user: User, status: ApplicationStatus | null = null) {
+  const snapshot = await getCountFromServer(myApplicationsQuery(user, status))
+  return snapshot.data().count
 }
 
 /** Deletes all applications to a job (used before deleting the job itself). */
