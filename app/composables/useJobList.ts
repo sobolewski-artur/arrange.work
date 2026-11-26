@@ -3,8 +3,8 @@ import type { WatchSource } from 'vue'
 export const JOB_PAGE_SIZE = 20
 
 /**
- * State for a paged job list ("My jobs", "Find work"): a tag filter and a sort, both kept in
- * the URL (?tags=seo,logo&sort=budgetHigh) so they survive reloads and Back, plus cursor
+ * State for a paged job list ("My jobs", "Find work"): tag and location filters and a sort, all
+ * kept in the URL (?tags=seo,logo&locations=Kraków&sort=budgetHigh) so they survive reloads and Back, plus cursor
  * pagination and the total count. Call in page setup.
  *
  * `scope` returns which jobs to list, or null while that isn't known yet (no signed-in user);
@@ -32,19 +32,39 @@ export function useJobList(options: {
   // --- Tag filter ---
 
   const filterTags = computed(() => normalizeTags(String(route.query.tags ?? '').split(','), MAX_FILTER_TAGS))
-  const filterActive = computed(() => filterTags.value.length > 0)
   /** What the filter box shows; pushed to the URL whenever it changes. */
   const filterDraft = ref<string[]>([...filterTags.value])
-
-  watch(filterDraft, (tags) => {
-    if (tags.join(',') === filterTags.value.join(',')) return
-    router.replace({ query: { ...route.query, tags: tags.length ? tags.join(',') : undefined } })
-  })
 
   function toggleFilterTag(tag: string) {
     filterDraft.value = filterDraft.value.includes(tag)
       ? filterDraft.value.filter(t => t !== tag)
       : normalizeTags([...filterDraft.value, tag], MAX_FILTER_TAGS)
+  }
+
+  // --- Location filter (?locations=Kraków,Gdańsk), used by "Find work" ---
+
+  const filterLocations = computed(() => normalizeLocations(String(route.query.locations ?? '').split(','), MAX_FILTER_LOCATIONS))
+  /** What the location box shows; pushed to the URL whenever it changes. */
+  const locationDraft = ref<string[]>([...filterLocations.value])
+
+  // One watcher for both filters, so changing both at once (e.g. "Clear filters") is a single
+  // URL update; two separate replaces would race and the second would restore the first.
+  watch([filterDraft, locationDraft], ([tags, cities]) => {
+    if (tags.join(',') === filterTags.value.join(',') && cities.join(',') === filterLocations.value.join(',')) return
+    router.replace({
+      query: {
+        ...route.query,
+        tags: tags.length ? tags.join(',') : undefined,
+        locations: cities.length ? cities.join(',') : undefined
+      }
+    })
+  })
+
+  const filterActive = computed(() => filterTags.value.length > 0 || filterLocations.value.length > 0)
+
+  function clearFilters() {
+    filterDraft.value = []
+    locationDraft.value = []
   }
 
   // --- Sort ("newest" is the default and left out of the URL) ---
@@ -72,7 +92,7 @@ export function useJobList(options: {
     failed.value = false
     try {
       await options.beforeLoad?.()
-      const page = await fetchJobs(scope, JOB_PAGE_SIZE, cursors.value[index] ?? null, filterTags.value, sort.value)
+      const page = await fetchJobs(scope, JOB_PAGE_SIZE, cursors.value[index] ?? null, filterTags.value, sort.value, filterLocations.value)
       if (load !== latestLoad) return
       jobs.value = page.jobs
       hasMore.value = page.hasMore
@@ -96,7 +116,7 @@ export function useJobList(options: {
     if (!scope) return
     const load = ++latestCount
     try {
-      const count = await countJobs(scope, filterTags.value)
+      const count = await countJobs(scope, filterTags.value, filterLocations.value)
       if (load === latestCount) total.value = count
     } catch (e) {
       // The count is only for the "1–20 of 57" label; the list works without it.
@@ -114,9 +134,10 @@ export function useJobList(options: {
   }, { immediate: true })
 
   // A new filter or sort starts again from the first page.
-  const resetKey: WatchSource<string> = () => `${filterTags.value.join(',')}|${sort.value}`
+  const resetKey: WatchSource<string> = () => `${filterTags.value.join(',')}|${filterLocations.value.join(',')}|${sort.value}`
   watch(resetKey, () => {
     filterDraft.value = [...filterTags.value]
+    locationDraft.value = [...filterLocations.value]
     if (!started.value) return
     cursors.value = [null]
     pageIndex.value = 0
@@ -154,6 +175,9 @@ export function useJobList(options: {
     filterActive,
     filterDraft,
     toggleFilterTag,
+    filterLocations,
+    locationDraft,
+    clearFilters,
     sort,
     setSort,
     loadPage,

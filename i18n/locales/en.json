@@ -119,10 +119,11 @@
         "removeTag": "Remove tag {tag}",
         "description": "Description",
         "descriptionPlaceholder": "What needs to be done, what you already have and what the result should look like.",
-        "locations": "Locations",
-        "locationsPlaceholder": "e.g. Warszawa",
+        "country": "Country",
+        "locations": "Cities",
+        "locationsPlaceholder": "Type a city",
         "locationsLimit": "Location limit reached",
-        "locationsHint": "Add at least one city: type it or pick a suggestion, then press Enter. Up to {max}.",
+        "locationsHint": "Leave empty if the job can be done anywhere in the country. Type a city and press Enter. Up to {max}.",
         "removeLocation": "Remove {value}",
         "budget": "Budget",
         "budgetAmount": "Budget amount",
@@ -175,6 +176,12 @@
         "budgetLow": "Budget: low to high",
         "budgetNote": "Jobs without a budget are listed last. Different currencies are compared by amount only."
       },
+      "locationFilter": {
+        "label": "Filter by location",
+        "placeholder": "Type or pick a city",
+        "limit": "Location limit reached",
+        "hint": "Shows jobs in any of these cities (up to {max})."
+      },
       "pagination": "Pagination",
       "range": "{from}–{to} of {total}",
       "page": "Page {page} of {pages}",
@@ -196,6 +203,7 @@
     "details": {
       "title": "Job",
       "posted": "Posted",
+      "location": "Location",
       "applications": {
         "title": "Applications",
         "empty": "No applications yet.",
@@ -250,6 +258,11 @@
       "title": "Find work",
       "subtitle": "Open jobs posted by clients.",
       "yourJob": "Your job",
+      "emptyFiltered": {
+        "title": "No jobs match these filters",
+        "text": "Try other tags or cities, or clear the filters.",
+        "clear": "Clear filters"
+      },
       "empty": {
         "title": "No open jobs yet",
         "text": "New jobs appear here as soon as clients post them."

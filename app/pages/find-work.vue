@@ -9,7 +9,7 @@ useHead({ title: () => t('jobs.browse.title') })
 
 // Every open job, from all clients (including the user's own, which get a badge).
 const list = useJobList({ scope: () => user.value ? { kind: 'open' } : null })
-const { jobs, pageIndex, loading, failed, filterTags, filterActive, filterDraft, sort } = list
+const { jobs, pageIndex, loading, failed, filterTags, filterActive, filterDraft, locationDraft, sort } = list
 
 const listTop = ref<HTMLElement | null>(null)
 
@@ -29,6 +29,8 @@ const actionButton = 'inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 
       <JobListControls
         v-if="filterActive || jobs.length > 0 || pageIndex > 0"
         v-model:filter="filterDraft"
+        v-model:locations="locationDraft"
+        show-locations
         class="mt-8"
         :sort="sort"
         @update:sort="list.setSort"
@@ -47,9 +49,9 @@ const actionButton = 'inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 
 
       <!-- Nothing matches the filter -->
       <div v-else-if="jobs.length === 0 && filterActive" class="mt-8 rounded-2xl bg-surface px-6 py-14 text-center ring-1 ring-line">
-        <h2 class="text-lg font-semibold">{{ $t('jobs.list.filter.empty.title') }}</h2>
-        <p class="mt-1 text-sm text-muted">{{ $t('jobs.list.filter.empty.text') }}</p>
-        <button type="button" :class="[secondaryButton, 'mt-6']" @click="filterDraft = []">{{ $t('jobs.list.filter.clear') }}</button>
+        <h2 class="text-lg font-semibold">{{ $t('jobs.browse.emptyFiltered.title') }}</h2>
+        <p class="mt-1 text-sm text-muted">{{ $t('jobs.browse.emptyFiltered.text') }}</p>
+        <button type="button" :class="[secondaryButton, 'mt-6']" @click="list.clearFilters">{{ $t('jobs.browse.emptyFiltered.clear') }}</button>
       </div>
 
       <!-- No open jobs at all -->

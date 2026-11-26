@@ -29,10 +29,10 @@ export const JOB_CURRENCIES = ['PLN', 'EUR', 'USD'] as const
 
 export type JobCurrency = typeof JOB_CURRENCIES[number]
 
-/** Where the work happens: one or more cities, at least one per job. */
+/** Where the work happens: a country (required) and up to this many cities in it (optional). */
 export const MAX_JOB_LOCATIONS = 10
 export const MAX_JOB_CITY_LENGTH = 80
-/** Suggestions offered in the locations field; any other city can be typed in. */
+/** Polish cities suggested in the cities field (see CITY_SUGGESTIONS); others can be typed in. */
 export const SUGGESTED_CITIES = [
   'Warszawa', 'Kraków', 'Wrocław', 'Łódź', 'Poznań', 'Gdańsk', 'Gdynia', 'Szczecin', 'Bydgoszcz', 'Lublin',
   'Białystok', 'Katowice', 'Rzeszów', 'Toruń', 'Kielce', 'Olsztyn', 'Opole', 'Częstochowa', 'Radom', 'Zielona Góra'
@@ -61,17 +61,21 @@ export interface NewJob {
   /** Free-text tags typed by the client (see utils/tags.ts). The form requires at least one; jobs from before tags existed have none. */
   tags: string[]
   description: string
-  /** Cities where the work happens (see normalizeLocations). The form requires at least one. */
+  /** ISO 3166-1 alpha-2 code of the country where the work happens (see utils/countries.ts). */
+  country: string
+  /** Cities in that country (see normalizeLocations); may be empty ("anywhere in the country"). */
   locations: string[]
   /** Whole amount in `currency`, or null when the client didn't give a budget. */
   budget: { amount: number, currency: JobCurrency } | null
 }
 
-export interface Job extends NewJob {
+export interface Job extends Omit<NewJob, 'country'> {
   id: string
   /** uid of the user who posted the job. */
   owner: string
   status: 'open'
+  /** Null for jobs posted before countries existed. */
+  country: string | null
   createdAt: Date | null
 }
 
@@ -114,6 +118,36 @@ const SORT_ORDER: Record<JobSort, [field: string, direction: 'asc' | 'desc'][]> 
   budgetLow: [['sort.budgetLow', 'asc'], ['createdAt', 'desc']]
 }
 
+// --- Filtering by location ---
+
+/**
+ * Most cities a "Find work" location filter can combine. Together with MAX_FILTER_TAGS this
+ * keeps tag × city pairs within Firestore's limit of 30 values for "contains any".
+ */
+export const MAX_FILTER_LOCATIONS = 3
+
+function cityKey(city: string) {
+  return city.toLocaleLowerCase()
+}
+
+function tagLocationKeys(tags: string[], cityKeys: string[]) {
+  return tags.flatMap(tag => cityKeys.map(city => `${tag}|${city}`))
+}
+
+/**
+ * Hidden lookup values stored on each job (`search.*`) for filtering by location. Cities are
+ * lowercased so matching ignores case. Firestore allows only one "contains any" condition per
+ * query, so filtering by tags and cities together uses `search.tagLocations`: every
+ * "tag|city" pair of the job.
+ */
+function searchFields(job: Pick<NewJob, 'tags' | 'locations'>) {
+  const cities = job.locations.map(cityKey)
+  return {
+    locations: cities,
+    tagLocations: tagLocationKeys(job.tags, cities)
+  }
+}
+
 // --- Writing ---
 
 /** Saves a new job owned by `user`. Returns the new document's id. */
@@ -122,6 +156,7 @@ export async function postJob(user: User, job: NewJob) {
     ...job,
     owner: user.uid,
     sort: sortFields(job),
+    search: searchFields(job),
     status: 'open',
     createdAt: serverTimestamp()
   })
@@ -133,6 +168,7 @@ export async function updateJob(id: string, job: NewJob) {
   await updateDoc(doc(jobsCollection(), id), {
     ...job,
     sort: sortFields(job),
+    search: searchFields(job),
     // Fields replaced by newer ones: category (now tags) and location (now locations).
     category: deleteField(),
     location: deleteField(),
@@ -169,17 +205,33 @@ export async function moveLegacyJobs(user: User) {
   return legacy.size
 }
 
+/**
+ * Adds the `search.*` lookup values to the user's jobs saved before they existed (location
+ * filters would miss those jobs). Reads all of the user's jobs; returns how many were updated.
+ */
+export async function addMissingSearchFields(user: User) {
+  const mine = await getDocs(query(jobsCollection(), where('owner', '==', user.uid)))
+  const missing = mine.docs.filter(d => d.data().search === undefined)
+  for (let i = 0; i < missing.length; i += 500) {
+    const batch = writeBatch(useFirestore())
+    for (const d of missing.slice(i, i + 500)) batch.update(d.ref, { search: searchFields(jobFromDoc(d)) })
+    await batch.commit()
+  }
+  return missing.length
+}
+
 const legacyMoves = new Map<string, Promise<void>>()
 
 /**
- * Runs moveLegacyJobs once per user per page load (an empty old location costs one read).
+ * Brings the user's own jobs up to date, once per user per page load: moves jobs from the old
+ * location (moveLegacyJobs), then adds missing search values (addMissingSearchFields).
  * Failures are logged and retried on the next call; they don't block loading jobs.
  */
 export function ensureLegacyJobsMoved(user: User) {
   let move = legacyMoves.get(user.uid)
   if (!move) {
-    move = moveLegacyJobs(user).then(() => {}, (e) => {
-      console.warn('Could not move jobs from the old location', e)
+    move = moveLegacyJobs(user).then(() => addMissingSearchFields(user)).then(() => {}, (e) => {
+      console.warn('Could not update older jobs', e)
       legacyMoves.delete(user.uid)
     })
     legacyMoves.set(user.uid, move)
@@ -198,6 +250,7 @@ function jobFromDoc(snapshot: DocumentSnapshot): Job {
     title: data.title,
     tags: normalizeTags(data.tags),
     description: data.description,
+    country: isCountryCode(data.country) ? data.country : null,
     // Older jobs had a single `location` ({ mode, city }); keep its city, if any.
     locations: Array.isArray(data.locations)
       ? normalizeLocations(data.locations)
@@ -215,30 +268,39 @@ function jobFromDoc(snapshot: DocumentSnapshot): Job {
 export type JobScope = { kind: 'mine', user: User } | { kind: 'open' }
 
 /**
- * Jobs in `scope`, optionally only those with any of `tags`. Each combination of scope, tag
- * filter and sort needs a composite index from firestore.indexes.json.
+ * Jobs in `scope`, optionally only those with any of `tags` and/or in any of `locations`.
+ * Each combination of scope, filter and sort needs a composite index from
+ * firestore.indexes.json (location filters are only indexed for open jobs).
  */
-function jobsQuery(scope: JobScope, tags: string[]) {
+function jobsQuery(scope: JobScope, tags: string[], locations: string[]) {
   const scoped = scope.kind === 'mine' ? where('owner', '==', scope.user.uid) : where('status', '==', 'open')
-  return tags.length
-    ? query(jobsCollection(), scoped, where('tags', 'array-contains-any', tags))
-    : query(jobsCollection(), scoped)
+  const cities = locations.map(cityKey)
+  const filter = tags.length && cities.length
+    ? where('search.tagLocations', 'array-contains-any', tagLocationKeys(tags, cities))
+    : tags.length
+      ? where('tags', 'array-contains-any', tags)
+      : cities.length
+        ? where('search.locations', 'array-contains-any', cities)
+        : null
+  return filter ? query(jobsCollection(), scoped, filter) : query(jobsCollection(), scoped)
 }
 
 /**
- * One page of jobs in `scope`, in `sort` order, optionally only those with any of `tags`.
- * Pass the previous page's `cursor` as `after` for the next page (with the same scope, tags
- * and sort). Fetches one extra document to know whether another page exists.
+ * One page of jobs in `scope`, in `sort` order, optionally only those with any of `tags`
+ * and/or in any of `locations`. Pass the previous page's `cursor` as `after` for the next
+ * page (with the same scope, filters and sort). Fetches one extra document to know whether
+ * another page exists.
  */
 export async function fetchJobs(
   scope: JobScope,
   pageSize: number,
   after: JobCursor | null = null,
   tags: string[] = [],
-  sort: JobSort = 'newest'
+  sort: JobSort = 'newest',
+  locations: string[] = []
 ) {
   const snapshot = await getDocs(query(
-    jobsQuery(scope, tags),
+    jobsQuery(scope, tags, locations),
     ...SORT_ORDER[sort].map(([field, direction]) => orderBy(field, direction)),
     ...(after ? [startAfter(after)] : []),
     limit(pageSize + 1)
@@ -247,9 +309,9 @@ export async function fetchJobs(
   return { jobs: docs.map(jobFromDoc), cursor: docs.at(-1) ?? null, hasMore: snapshot.size > pageSize }
 }
 
-/** Number of jobs in `scope`, optionally only those with any of `tags` (one cheap aggregation query). */
-export async function countJobs(scope: JobScope, tags: string[] = []) {
-  const snapshot = await getCountFromServer(jobsQuery(scope, tags))
+/** Number of jobs in `scope` matching the same filters (one cheap aggregation query). */
+export async function countJobs(scope: JobScope, tags: string[] = [], locations: string[] = []) {
+  const snapshot = await getCountFromServer(jobsQuery(scope, tags, locations))
   return snapshot.data().count
 }
 

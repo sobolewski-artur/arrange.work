@@ -5,7 +5,7 @@
  */
 const props = defineProps<{
   /** Values to start from when editing; empty form when omitted. */
-  initial?: NewJob
+  initial?: Omit<NewJob, 'country'> & { country: string | null }
   submitLabel: string
   cancelTo: string
   submitting: boolean
@@ -26,8 +26,12 @@ const tagInput = ref<{ commit: () => void } | null>(null)
 
 const description = ref(props.initial?.description ?? '')
 
-// Cities, typed or picked from suggestions; at least one is required. Like tags, a city typed
-// but not yet confirmed with Enter counts and is added on submit.
+// Location: a country (required; jobs from before countries existed default to Poland) and
+// optional cities in it, with suggestions for the chosen country. Like tags, a city typed but
+// not yet confirmed with Enter is added on submit.
+const { options: countryOptions } = useCountries()
+const country = ref(props.initial?.country ?? DEFAULT_COUNTRY)
+const citySuggestions = computed(() => CITY_SUGGESTIONS[country.value])
 const locations = ref<string[]>(normalizeLocations(props.initial?.locations ?? []))
 const locationPending = ref('')
 const locationInput = ref<{ commit: () => void } | null>(null)
@@ -37,22 +41,23 @@ const currency = ref<JobCurrency>(props.initial?.budget?.currency ?? (locale.val
 
 // At least one tag is required; text typed but not yet confirmed with Enter counts.
 const hasTag = computed(() => tags.value.length > 0 || normalizeTag(tagPending.value) !== '')
-const hasLocation = computed(() => locations.value.length > 0 || locationPending.value.trim() !== '')
 
 const canSubmit = computed(() =>
-  !props.submitting && title.value.trim() !== '' && description.value.trim() !== '' && hasTag.value && hasLocation.value
+  !props.submitting && title.value.trim() !== '' && description.value.trim() !== '' && hasTag.value
+  && isCountryCode(country.value)
 )
 
 function submit() {
   if (!canSubmit.value) return
   tagInput.value?.commit()
   locationInput.value?.commit()
-  if (tags.value.length === 0 || locations.value.length === 0) return
+  if (tags.value.length === 0) return
   const amount = typeof budgetAmount.value === 'number' && budgetAmount.value > 0 ? Math.round(budgetAmount.value) : null
   emit('submit', {
     title: title.value.trim(),
     tags: tags.value,
     description: description.value.trim(),
+    country: country.value,
     locations: locations.value,
     budget: amount ? { amount, currency: currency.value } : null
   })
@@ -104,8 +109,25 @@ const secondaryButton = 'inline-flex items-center justify-center rounded-lg bg-s
     </div>
 
     <div>
+      <label for="job-country" class="block text-sm font-medium">{{ $t('jobs.new.fields.country') }}</label>
+      <select
+        id="job-country"
+        v-model="country"
+        required
+        autocomplete="country"
+        :disabled="submitting"
+        :class="inputClass"
+      >
+        <option v-for="option in countryOptions" :key="option.code" :value="option.code">{{ option.name }}</option>
+      </select>
+    </div>
+
+    <div>
       <div class="flex items-baseline justify-between gap-4">
-        <label for="job-locations" class="block text-sm font-medium">{{ $t('jobs.new.fields.locations') }}</label>
+        <label for="job-locations" class="block text-sm font-medium">
+          {{ $t('jobs.new.fields.locations') }}
+          <span class="font-normal text-muted">({{ $t('jobs.new.fields.optional') }})</span>
+        </label>
         <span class="text-xs text-subtle tabular-nums" aria-hidden="true">{{ locations.length }} / {{ MAX_JOB_LOCATIONS }}</span>
       </div>
       <TagInput
@@ -114,11 +136,10 @@ const secondaryButton = 'inline-flex items-center justify-center rounded-lg bg-s
         v-model="locations"
         v-model:pending="locationPending"
         class="mt-1"
-        required
         describedby="job-locations-hint"
         :max="MAX_JOB_LOCATIONS"
         :normalize="normalizeLocations"
-        :suggestions="SUGGESTED_CITIES"
+        :suggestions="citySuggestions"
         remove-label-key="jobs.new.fields.removeLocation"
         :placeholder="$t('jobs.new.fields.locationsPlaceholder')"
         :limit-placeholder="$t('jobs.new.fields.locationsLimit')"

@@ -9,9 +9,16 @@ export function useJobFormat() {
     return new Intl.NumberFormat(locale.value, { style: 'currency', currency: budget.currency, maximumFractionDigits: 0 }).format(budget.amount)
   }
 
-  /** "Kraków, Warszawa, Gdańsk". */
-  function formatLocations(locations: string[]) {
-    return locations.join(', ')
+  const { countryName } = useCountries()
+
+  /**
+   * "Kraków, Gdańsk · Poland", just "Poland" with no cities, or just the cities for older
+   * jobs without a country. Empty when there's nothing to show.
+   */
+  function formatLocation(job: Pick<Job, 'country' | 'locations'>) {
+    const cities = job.locations.join(', ')
+    const country = job.country ? countryName(job.country) : ''
+    return [cities, country].filter(Boolean).join(' · ')
   }
 
   function formatDate(date: Date) {
@@ -32,5 +39,5 @@ export function useJobFormat() {
     return relativeFormat.value.format(0, 'second')
   }
 
-  return { formatBudget, formatLocations, formatDate, formatRelative }
+  return { formatBudget, formatLocation, formatDate, formatRelative }
 }

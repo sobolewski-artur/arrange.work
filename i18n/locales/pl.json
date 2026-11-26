@@ -119,10 +119,11 @@
         "removeTag": "Usuń tag {tag}",
         "description": "Opis",
         "descriptionPlaceholder": "Co trzeba zrobić, co już masz i jak ma wyglądać efekt końcowy.",
-        "locations": "Lokalizacje",
-        "locationsPlaceholder": "np. Warszawa",
+        "country": "Kraj",
+        "locations": "Miasta",
+        "locationsPlaceholder": "Wpisz miasto",
         "locationsLimit": "Osiągnięto limit lokalizacji",
-        "locationsHint": "Dodaj co najmniej jedno miasto: wpisz je lub wybierz z podpowiedzi i naciśnij Enter. Maksymalnie {max}.",
+        "locationsHint": "Zostaw puste, jeśli zlecenie można wykonać w dowolnym miejscu w kraju. Wpisz miasto i naciśnij Enter. Maksymalnie {max}.",
         "removeLocation": "Usuń {value}",
         "budget": "Budżet",
         "budgetAmount": "Kwota budżetu",
@@ -175,6 +176,12 @@
         "budgetLow": "Budżet: od najniższego",
         "budgetNote": "Zlecenia bez budżetu są na końcu. Różne waluty są porównywane tylko po kwocie."
       },
+      "locationFilter": {
+        "label": "Filtruj po lokalizacji",
+        "placeholder": "Wpisz lub wybierz miasto",
+        "limit": "Osiągnięto limit lokalizacji",
+        "hint": "Pokazuje zlecenia w dowolnym z tych miast (maksymalnie {max})."
+      },
       "pagination": "Stronicowanie",
       "range": "{from}–{to} z {total}",
       "page": "Strona {page} z {pages}",
@@ -196,6 +203,7 @@
     "details": {
       "title": "Zlecenie",
       "posted": "Dodano",
+      "location": "Lokalizacja",
       "applications": {
         "title": "Zgłoszenia",
         "empty": "Brak zgłoszeń.",
@@ -250,6 +258,11 @@
       "title": "Znajdź zlecenia",
       "subtitle": "Otwarte zlecenia dodane przez klientów.",
       "yourJob": "Twoje zlecenie",
+      "emptyFiltered": {
+        "title": "Brak zleceń pasujących do filtrów",
+        "text": "Spróbuj innych tagów lub miast albo wyczyść filtry.",
+        "clear": "Wyczyść filtry"
+      },
       "empty": {
         "title": "Brak otwartych zleceń",
         "text": "Nowe zlecenia pojawią się tutaj, gdy tylko klienci je dodadzą."
