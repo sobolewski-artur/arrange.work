@@ -1,7 +1,4 @@
 <script setup lang="ts">
-import type { FirebaseError } from 'firebase/app'
-import { updateProfile } from 'firebase/auth'
-
 definePageMeta({ middleware: 'auth', layout: 'site' })
 
 const { t } = useI18n()
@@ -49,21 +46,19 @@ async function stopEdit() {
 }
 
 async function saveDisplayName() {
-  const u = user.value
-  if (!u || !canSave.value) return
+  if (!user.value || !canSave.value) return
   saving.value = true
   clearMessages()
   try {
-    await updateProfile(u, { displayName: trimmed.value })
-    refreshCurrentUser()
+    await unwrap(useAuthClient().updateUser({ name: trimmed.value }))
+    await refreshCurrentUser({ fresh: true })
     status.value = t('account.saved')
     await stopEdit()
   } catch (e) {
     console.error(e)
-    const code = (e as FirebaseError).code
-    error.value = code === 'auth/network-request-failed'
+    error.value = e instanceof AuthFailure && e.isNetwork
       ? t('auth.errors.network')
-      : code === 'auth/too-many-requests'
+      : e instanceof AuthFailure && e.status === 429
         ? t('auth.errors.tooManyRequests')
         : t('account.errors.saveFailed')
   } finally {
@@ -82,21 +77,19 @@ function photoErrorMessage(e: unknown) {
       ? t('account.errors.photoTooLarge', { max: MAX_AVATAR_SOURCE_MB })
       : t('account.errors.photoUnreadable')
   }
-  const code = (e as FirebaseError).code
-  return code === 'auth/network-request-failed' || code === 'storage/retry-limit-exceeded'
+  return isNetworkError(e) || (e instanceof AuthFailure && e.isNetwork)
     ? t('auth.errors.network')
-    : code === 'auth/too-many-requests'
+    : e instanceof AuthFailure && e.status === 429
       ? t('auth.errors.tooManyRequests')
       : t('account.errors.photoFailed')
 }
 
-async function runPhotoAction(action: (u: NonNullable<typeof user.value>) => Promise<void>, successMessage: string) {
-  const u = user.value
-  if (!u || photoBusy.value) return
+async function runPhotoAction(action: () => Promise<void>, successMessage: string) {
+  if (!user.value || photoBusy.value) return
   photoBusy.value = true
   clearMessages()
   try {
-    await action(u)
+    await action()
     status.value = successMessage
   } catch (e) {
     console.error(e)
@@ -111,7 +104,7 @@ function onPhotoSelected(event: Event) {
   const file = input.files?.[0]
   // Reset so picking the same file again still fires `change`.
   input.value = ''
-  if (file) runPhotoAction(u => uploadAvatar(u, file), t('account.photoSaved'))
+  if (file) runPhotoAction(() => uploadAvatar(file), t('account.photoSaved'))
 }
 
 function removePhoto() {

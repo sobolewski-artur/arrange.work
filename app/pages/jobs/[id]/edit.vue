@@ -1,6 +1,4 @@
 <script setup lang="ts">
-import type { FirebaseError } from 'firebase/app'
-
 definePageMeta({ middleware: 'auth', layout: 'site' })
 
 const { t } = useI18n()
@@ -20,7 +18,6 @@ async function load() {
   if (!u) return
   state.value = 'loading'
   try {
-    await ensureLegacyJobsMoved(u)
     job.value = await fetchMyJob(u, jobId.value)
     state.value = job.value ? 'ready' : 'notFound'
   } catch (e) {
@@ -46,10 +43,9 @@ async function save(updated: NewJob) {
     await navigateTo(localePath({ path: '/jobs', query: { updated: '1' } }))
   } catch (e) {
     console.error(e)
-    const code = (e as FirebaseError).code
-    error.value = code === 'unavailable'
+    error.value = isNetworkError(e)
       ? t('auth.errors.network')
-      : code === 'not-found'
+      : isNotFound(e)
         ? t('jobs.edit.notFound.text')
         : t('jobs.edit.errors.failed')
   } finally {

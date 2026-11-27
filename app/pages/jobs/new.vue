@@ -1,6 +1,4 @@
 <script setup lang="ts">
-import type { FirebaseError } from 'firebase/app'
-
 definePageMeta({ middleware: 'auth', layout: 'site' })
 
 const { t } = useI18n()
@@ -17,17 +15,15 @@ const postedTitle = ref<string | null>(null)
 const formKey = ref(0)
 
 async function submit(job: NewJob) {
-  const u = user.value
-  if (!u) return
+  if (!user.value) return
   submitting.value = true
   error.value = null
   try {
-    await postJob(u, job)
+    await postJob(job)
     postedTitle.value = job.title
   } catch (e) {
     console.error(e)
-    const code = (e as FirebaseError).code
-    error.value = code === 'unavailable' ? t('auth.errors.network') : t('jobs.new.errors.failed')
+    error.value = isNetworkError(e) ? t('auth.errors.network') : t('jobs.new.errors.failed')
   } finally {
     submitting.value = false
   }

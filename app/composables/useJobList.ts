@@ -8,11 +8,10 @@ export const JOB_PAGE_SIZE = 20
  * pagination and the total count. Call in page setup.
  *
  * `scope` returns which jobs to list, or null while that isn't known yet (no signed-in user);
- * the first page loads as soon as it's non-null. `beforeLoad` runs before every page load.
+ * the first page loads as soon as it's non-null.
  */
 export function useJobList(options: {
   scope: () => JobScope | null
-  beforeLoad?: () => Promise<void> | void
   /** Called whenever the filter or sort changes and the list starts again from page 1. */
   onReset?: () => void
 }) {
@@ -21,8 +20,8 @@ export function useJobList(options: {
 
   const jobs = shallowRef<Job[]>([])
   const pageIndex = ref(0)
-  // cursors[i] is where page i starts (null for the first page). Firestore pages by cursor,
-  // so pages are reached one step at a time with Previous / Next.
+  // cursors[i] is where page i starts (null for the first page); pages are reached one step
+  // at a time with Previous / Next.
   const cursors = shallowRef<(JobCursor | null)[]>([null])
   const hasMore = ref(false)
   const total = ref<number | null>(null)
@@ -91,7 +90,6 @@ export function useJobList(options: {
     loading.value = true
     failed.value = false
     try {
-      await options.beforeLoad?.()
       const page = await fetchJobs(scope, JOB_PAGE_SIZE, cursors.value[index] ?? null, filterTags.value, sort.value, filterLocations.value)
       if (load !== latestLoad) return
       jobs.value = page.jobs

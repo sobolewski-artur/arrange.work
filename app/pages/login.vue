@@ -1,18 +1,5 @@
 <script setup lang="ts">
-import type { FirebaseError } from 'firebase/app'
-import {
-  GoogleAuthProvider,
-  createUserWithEmailAndPassword,
-  getRedirectResult,
-  sendPasswordResetEmail,
-  signInWithEmailAndPassword,
-  signInWithPopup,
-  signInWithRedirect,
-  updateProfile,
-  type User
-} from 'firebase/auth'
-
-const { t, locale } = useI18n()
+const { t } = useI18n()
 const localePath = useLocalePath()
 const route = useRoute()
 const router = useRouter()
@@ -22,8 +9,6 @@ const user = useCurrentUser()
 // For email/password, sign-up creates the account and sign-in requires an existing one.
 const mode = computed<'signin' | 'signup'>(() => (route.query.mode === 'signup' ? 'signup' : 'signin'))
 
-useHead(() => ({ title: mode.value === 'signup' ? t('auth.signUp') : t('auth.signIn') }))
-
 const displayName = ref('')
 const email = ref('')
 const password = ref('')
@@ -31,19 +16,29 @@ const pending = ref<'google' | 'email' | 'reset' | null>(null)
 const error = ref<string | null>(null)
 const notice = ref<string | null>(null)
 
-// Minimum length from the project's password policy (Firebase console → Authentication → Settings).
-const MIN_PASSWORD_LENGTH = 6
+/** Neon Auth's (Better Auth's) minimum password length. */
+const MIN_PASSWORD_LENGTH = 8
 
 const redirectTo = computed(() => safeRedirect(route.query.redirect, localePath('/')))
 
+// Password reset with an emailed 6-digit code: "Forgot password?" sends it, then this form
+// takes the code and a new password.
+const resetStep = ref<'off' | 'code'>('off')
+const resetCode = ref('')
+const newPassword = ref('')
+
+useHead(() => ({
+  title: resetStep.value === 'code' ? t('auth.resetTitle') : mode.value === 'signup' ? t('auth.signUp') : t('auth.signIn')
+}))
+
 // Unverified email/password accounts go to /verify-email first (Google accounts are verified).
-function continueAfterSignIn(u: User) {
+function continueAfterSignIn(u: AppUser) {
   if (!u.emailVerified) return redirectToVerifyEmail(redirectTo.value)
   return navigateTo(redirectTo.value, { replace: true })
 }
 
-// Already signed in (or returning from the Google redirect fallback). While a sign-in started
-// on this page is in progress, its handler navigates instead, after any follow-up work.
+// Already signed in (or just back from Google). While a sign-in started on this page is in
+// progress, its handler navigates instead, after any follow-up work.
 watch(user, (u) => {
   if (u && !pending.value) continueAfterSignIn(u)
 }, { immediate: true })
@@ -56,43 +51,37 @@ function resetMessages() {
 function toggleMode() {
   resetMessages()
   password.value = ''
+  resetStep.value = 'off'
   router.replace({ query: { ...route.query, mode: mode.value === 'signup' ? undefined : 'signup' } })
 }
 
-function errorMessage(code: string | undefined): string | null {
-  switch (code) {
-    case 'auth/popup-closed-by-user':
-    case 'auth/cancelled-popup-request':
-    case 'auth/user-cancelled':
-      return null
-    // With email enumeration protection on, wrong password and unknown email both
-    // come back as invalid-credential.
-    case 'auth/invalid-credential':
-    case 'auth/invalid-login-credentials':
-    case 'auth/wrong-password':
-    case 'auth/user-not-found':
+function errorMessage(e: unknown): string {
+  if (!(e instanceof AuthFailure)) return t('auth.errors.generic')
+  if (e.isNetwork) return t('auth.errors.network')
+  if (e.status === 429) return t('auth.errors.tooManyRequests')
+  switch (e.code) {
+    // Wrong password and unknown email look the same, so registered emails aren't revealed.
+    case 'INVALID_EMAIL_OR_PASSWORD':
+    case 'CREDENTIAL_ACCOUNT_NOT_FOUND':
+    case 'USER_NOT_FOUND':
       return t('auth.errors.invalidCredentials')
-    case 'auth/invalid-email':
+    case 'INVALID_EMAIL':
       return t('auth.errors.invalidEmail')
-    case 'auth/missing-password':
-      return t('auth.errors.missingPassword')
-    case 'auth/email-already-in-use':
+    case 'USER_ALREADY_EXISTS':
+    case 'USER_ALREADY_EXISTS_USE_ANOTHER_EMAIL':
       return t('auth.errors.emailInUse')
-    case 'auth/weak-password':
-    case 'auth/password-does-not-meet-requirements':
+    case 'PASSWORD_TOO_SHORT':
       return t('auth.errors.weakPassword', { min: MIN_PASSWORD_LENGTH })
-    case 'auth/user-disabled':
+    case 'PASSWORD_TOO_LONG':
+      return t('auth.errors.passwordTooLong')
+    case 'BANNED_USER':
       return t('auth.errors.userDisabled')
-    case 'auth/too-many-requests':
-      return t('auth.errors.tooManyRequests')
-    case 'auth/operation-not-allowed':
-      return t('auth.errors.operationNotAllowed')
-    case 'auth/unauthorized-domain':
-      return t('auth.errors.unauthorizedDomain')
-    case 'auth/network-request-failed':
-      return t('auth.errors.network')
-    case 'auth/account-exists-with-different-credential':
-      return t('auth.errors.accountExists')
+    case 'INVALID_OTP':
+      return t('auth.errors.invalidCode')
+    case 'OTP_EXPIRED':
+      return t('auth.errors.codeExpired')
+    case 'TOO_MANY_ATTEMPTS':
+      return t('auth.errors.tooManyCodeAttempts')
     default:
       return t('auth.errors.generic')
   }
@@ -100,28 +89,24 @@ function errorMessage(code: string | undefined): string | null {
 
 function fail(e: unknown) {
   console.error(e)
-  error.value = errorMessage((e as FirebaseError).code)
+  error.value = errorMessage(e)
 }
 
 async function continueWithGoogle() {
   resetMessages()
   pending.value = 'google'
-
-  const auth = useFirebaseAuth()
-  auth.languageCode = locale.value
-  const provider = new GoogleAuthProvider()
-  provider.setCustomParameters({ prompt: 'select_account' })
-
   try {
-    const { user: signedIn } = await signInWithPopup(auth, provider)
-    await continueAfterSignIn(signedIn)
+    // Neon Auth sends the browser to Google and back to `callbackURL`, where
+    // server/middleware/neon-auth-oauth.ts finishes the sign-in. Failures come back to this
+    // page with ?error=… (see onMounted).
+    await unwrap(useAuthClient().signIn.social({
+      provider: 'google',
+      callbackURL: new URL(redirectTo.value, window.location.origin).href,
+      errorCallbackURL: new URL(route.fullPath, window.location.origin).href
+    }))
+    // The page is navigating to Google now; stay "pending" until it does.
   } catch (e) {
-    if ((e as FirebaseError).code === 'auth/popup-blocked') {
-      await signInWithRedirect(auth, provider)
-      return
-    }
     fail(e)
-  } finally {
     pending.value = null
   }
 }
@@ -129,29 +114,25 @@ async function continueWithGoogle() {
 async function submitEmail() {
   resetMessages()
   pending.value = 'email'
-  const auth = useFirebaseAuth()
+  const client = useAuthClient()
+  const address = email.value.trim()
 
   try {
     if (mode.value === 'signup') {
-      const { user: created } = await createUserWithEmailAndPassword(auth, email.value.trim(), password.value)
-      // Set the name before sending the verification email, so its template can use %DISPLAY_NAME%.
-      // The account already exists at this point, so a failure here shouldn't block sign-up.
+      await unwrap(client.signUp.email({ email: address, password: password.value, name: displayName.value.trim() }))
+      // The account exists at this point, so a failed email shouldn't block sign-up:
+      // the verify-email page offers "Resend code".
       try {
-        await updateProfile(created, { displayName: displayName.value.trim() })
+        await sendVerificationCode(address)
+        markVerificationCodeSent(address)
       } catch (e) {
         console.error(e)
       }
-      try {
-        await sendVerificationEmail(created, redirectTo.value)
-      } catch (e) {
-        // The verify-email page offers "Resend".
-        console.error(e)
-      }
-      await continueAfterSignIn(created)
     } else {
-      const { user: signedIn } = await signInWithEmailAndPassword(auth, email.value.trim(), password.value)
-      await continueAfterSignIn(signedIn)
+      await unwrap(client.signIn.email({ email: address, password: password.value }))
     }
+    const signedIn = await refreshCurrentUser({ fresh: true })
+    if (signedIn) await continueAfterSignIn(signedIn)
   } catch (e) {
     fail(e)
   } finally {
@@ -167,24 +148,52 @@ async function forgotPassword() {
   }
 
   pending.value = 'reset'
-  const auth = useFirebaseAuth()
-  auth.languageCode = locale.value
-
   try {
-    await sendPasswordResetEmail(auth, email.value.trim())
+    await unwrap(useAuthClient().emailOtp.requestPasswordReset({ email: email.value.trim() }))
     // Same message whether or not the account exists (don't reveal registered emails).
-    notice.value = t('auth.resetSent')
+    notice.value = t('auth.resetCodeSent')
+    resetCode.value = ''
+    newPassword.value = ''
+    resetStep.value = 'code'
   } catch (e) {
-    if ((e as FirebaseError).code === 'auth/user-not-found') notice.value = t('auth.resetSent')
-    else fail(e)
+    fail(e)
   } finally {
     pending.value = null
   }
 }
 
-// Surface errors from the Google redirect fallback (no-op when there was no redirect).
+async function submitReset() {
+  resetMessages()
+  pending.value = 'reset'
+  const client = useAuthClient()
+  const address = email.value.trim()
+  try {
+    await unwrap(client.emailOtp.resetPassword({ email: address, otp: resetCode.value.trim(), password: newPassword.value }))
+    await unwrap(client.signIn.email({ email: address, password: newPassword.value }))
+    resetStep.value = 'off'
+    const signedIn = await refreshCurrentUser({ fresh: true })
+    if (signedIn) await continueAfterSignIn(signedIn)
+  } catch (e) {
+    fail(e)
+  } finally {
+    pending.value = null
+  }
+}
+
+function cancelReset() {
+  resetMessages()
+  resetStep.value = 'off'
+}
+
+// Coming back from a failed or cancelled Google sign-in (?error=… from Neon Auth).
 onMounted(() => {
-  getRedirectResult(useFirebaseAuth()).catch(fail)
+  const code = route.query.error
+  if (typeof code !== 'string') return
+  if (code !== 'access_denied') {
+    console.error('Google sign-in failed:', code)
+    error.value = code === 'account_not_linked' ? t('auth.errors.accountExists') : t('auth.errors.generic')
+  }
+  router.replace({ query: { ...route.query, error: undefined, error_description: undefined } })
 })
 
 const busy = computed(() => pending.value !== null || user.value !== null)
@@ -198,6 +207,63 @@ const inputClass = 'mt-1 block w-full rounded-lg bg-surface px-3 py-2 text-sm ri
         arrange.work
       </NuxtLink>
 
+      <template v-if="resetStep === 'code'">
+        <h1 class="mt-6 text-2xl font-bold tracking-tight">{{ $t('auth.resetTitle') }}</h1>
+        <i18n-t keypath="auth.resetSubtitle" tag="p" class="mt-1 text-sm text-muted" scope="global">
+          <template #email>
+            <strong class="font-medium text-fg break-all">{{ email.trim() }}</strong>
+          </template>
+        </i18n-t>
+
+        <form class="mt-8 space-y-4" @submit.prevent="submitReset">
+          <label class="block text-sm font-medium">
+            {{ $t('auth.resetCode') }}
+            <input
+              v-model="resetCode"
+              type="text"
+              name="code"
+              inputmode="numeric"
+              autocomplete="one-time-code"
+              pattern="\s*\d{6}\s*"
+              maxlength="10"
+              required
+              :disabled="pending !== null"
+              :class="inputClass"
+            >
+          </label>
+          <label class="block text-sm font-medium">
+            {{ $t('auth.newPassword') }}
+            <input
+              v-model="newPassword"
+              type="password"
+              name="new-password"
+              autocomplete="new-password"
+              :minlength="MIN_PASSWORD_LENGTH"
+              required
+              :disabled="pending !== null"
+              :class="inputClass"
+            >
+            <span class="mt-1 block text-xs font-normal text-muted">{{ $t('auth.passwordHint', { min: MIN_PASSWORD_LENGTH }) }}</span>
+          </label>
+          <button
+            type="submit"
+            class="w-full rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-on-primary transition hover:bg-primary-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-fg disabled:cursor-not-allowed disabled:opacity-60"
+            :disabled="pending !== null"
+          >
+            {{ pending === 'reset' ? $t('auth.pending') : $t('auth.setNewPassword') }}
+          </button>
+          <button
+            type="button"
+            class="w-full rounded-lg bg-surface px-4 py-2.5 text-sm font-medium ring-1 ring-line-strong transition hover:bg-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-fg disabled:cursor-not-allowed disabled:opacity-60"
+            :disabled="pending !== null"
+            @click="forgotPassword"
+          >
+            {{ $t('auth.resendCode') }}
+          </button>
+        </form>
+      </template>
+
+      <template v-else>
       <h1 class="mt-6 text-2xl font-bold tracking-tight">
         {{ mode === 'signup' ? $t('auth.signUpTitle') : $t('auth.signInTitle') }}
       </h1>
@@ -295,6 +361,7 @@ const inputClass = 'mt-1 block w-full rounded-lg bg-surface px-3 py-2 text-sm ri
           <template v-else>{{ mode === 'signup' ? $t('auth.createAccount') : $t('auth.signIn') }}</template>
         </button>
       </form>
+      </template>
 
       <p v-if="error" role="alert" class="mt-4 rounded-lg bg-danger-soft px-3 py-2 text-sm text-danger ring-1 ring-danger-line">
         {{ error }}
@@ -303,7 +370,12 @@ const inputClass = 'mt-1 block w-full rounded-lg bg-surface px-3 py-2 text-sm ri
         {{ notice }}
       </p>
 
-      <p class="mt-8 text-center text-sm text-muted">
+      <p v-if="resetStep === 'code'" class="mt-8 text-center text-sm text-muted">
+        <button type="button" class="font-medium text-fg underline-offset-4 hover:underline" @click="cancelReset">
+          {{ $t('auth.backToSignIn') }}
+        </button>
+      </p>
+      <p v-else class="mt-8 text-center text-sm text-muted">
         {{ mode === 'signup' ? $t('auth.haveAccount') : $t('auth.noAccount') }}
         <button type="button" class="font-medium text-fg underline-offset-4 hover:underline" @click="toggleMode">
           {{ mode === 'signup' ? $t('auth.signIn') : $t('auth.signUp') }}

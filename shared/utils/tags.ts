@@ -31,7 +31,7 @@ export function normalizeTags(tags: unknown, max = MAX_JOB_TAGS): string[] {
 }
 
 /**
- * Most tags a "My jobs" filter can combine. Firestore's array-contains-any allows up to 30;
- * a smaller cap keeps the filter readable.
+ * Most tags a "My jobs" filter can combine. The API accepts at most this many;
+ * it also keeps the filter readable.
  */
 export const MAX_FILTER_TAGS = 10

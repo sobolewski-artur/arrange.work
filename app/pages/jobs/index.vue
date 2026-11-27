@@ -11,8 +11,6 @@ useHead({ title: () => t('jobs.list.title') })
 
 const list = useJobList({
   scope: () => user.value ? { kind: 'mine', user: user.value } : null,
-  // Jobs saved under the old location (users/{uid}/jobs) are moved first.
-  beforeLoad: () => user.value ? ensureLegacyJobsMoved(user.value) : undefined,
   onReset: () => { confirmingId.value = null }
 })
 const { jobs, pageIndex, loading, failed, filterTags, filterActive, filterDraft, sort } = list

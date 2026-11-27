@@ -380,14 +380,14 @@
   },
   "verify": {
     "title": "Potwierdź swój e-mail",
-    "sentTo": "Wysłaliśmy link weryfikacyjny na adres {email}. Otwórz go, aby aktywować konto, a potem wróć tutaj.",
+    "sentTo": "Wysłaliśmy 6-cyfrowy kod na adres {email}. Wpisz go poniżej, aby aktywować konto.",
     "spamHint": "Nie widzisz wiadomości? Sprawdź folder spam.",
-    "continue": "E-mail potwierdzony, kontynuuj",
-    "notYet": "Twój e-mail nie jest jeszcze potwierdzony. Najpierw kliknij link w wiadomości.",
-    "resend": "Wyślij ponownie",
+    "continue": "Potwierdź e-mail",
+    "resend": "Wyślij nowy kod",
     "resendIn": "Wyślij ponownie za {s} s",
-    "resent": "Wysłano e-mail weryfikacyjny.",
-    "wrongAccount": "Nie to konto?"
+    "resent": "Wysłaliśmy nowy kod.",
+    "wrongAccount": "Nie to konto?",
+    "codeLabel": "Kod weryfikacyjny"
   },
   "auth": {
     "signIn": "Zaloguj się",
@@ -408,7 +408,6 @@
     "password": "Hasło",
     "passwordHint": "Co najmniej {min} znaków.",
     "forgotPassword": "Nie pamiętasz hasła?",
-    "resetSent": "Jeśli konto z tym adresem istnieje, wysłaliśmy link do zresetowania hasła.",
     "noAccount": "Nie masz konta?",
     "haveAccount": "Masz już konto?",
     "signedInAs": "Zalogowano jako {name}",
@@ -422,11 +421,21 @@
       "userDisabled": "To konto zostało zablokowane.",
       "tooManyRequests": "Zbyt wiele prób. Odczekaj chwilę i spróbuj ponownie.",
       "enterEmailForReset": "Wpisz swój e-mail powyżej, a potem ponownie kliknij „Nie pamiętasz hasła?”.",
-      "operationNotAllowed": "Ta metoda logowania nie jest włączona w tym projekcie.",
-      "unauthorizedDomain": "Ta domena nie ma uprawnień do logowania.",
       "network": "Błąd sieci. Sprawdź połączenie i spróbuj ponownie.",
       "accountExists": "Konto z tym adresem e-mail już istnieje i używa innej metody logowania.",
-      "generic": "Logowanie nie powiodło się. Spróbuj ponownie."
-    }
+      "generic": "Logowanie nie powiodło się. Spróbuj ponownie.",
+      "passwordTooLong": "To hasło jest za długie.",
+      "invalidCode": "Ten kod jest nieprawidłowy. Sprawdź wiadomość i spróbuj ponownie.",
+      "codeExpired": "Ten kod wygasł. Wyślij nowy.",
+      "tooManyCodeAttempts": "Zbyt wiele błędnych kodów. Wyślij nowy."
+    },
+    "resetCodeSent": "Jeśli konto z tym adresem istnieje, wysłaliśmy na nie 6-cyfrowy kod do zresetowania hasła.",
+    "resetTitle": "Zresetuj hasło",
+    "resetSubtitle": "Wpisz kod wysłany na adres {email} i ustaw nowe hasło.",
+    "resetCode": "Kod z wiadomości",
+    "newPassword": "Nowe hasło",
+    "setNewPassword": "Ustaw nowe hasło",
+    "resendCode": "Wyślij nowy kod",
+    "backToSignIn": "Wróć do logowania"
   }
 }

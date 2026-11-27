@@ -1,5 +1,3 @@
-import { updateProfile, type User } from 'firebase/auth'
-import { deleteObject, getDownloadURL, listAll, ref as storageRef, uploadBytes } from 'firebase/storage'
 
 /** Largest image file accepted before resizing (the uploaded avatar itself is much smaller). */
 export const MAX_AVATAR_SOURCE_MB = 2
@@ -46,37 +44,25 @@ async function toSquareAvatar(file: File): Promise<Blob> {
   })
 }
 
-/** Deletes the user's stored avatars except `keepPath`. Failures are only logged. */
-async function deleteOldAvatars(uid: string, keepPath?: string) {
-  try {
-    const { items } = await listAll(storageRef(useFirebaseStorage(), `avatars/${uid}`))
-    await Promise.all(items.filter(item => item.fullPath !== keepPath).map(item => deleteObject(item)))
-  } catch (e) {
-    console.warn('Could not clean up old avatars', e)
-  }
-}
-
 /**
- * Resizes `file`, uploads it to avatars/{uid}/ and sets it as the user's photoURL.
- * Each upload gets a new file name, so browsers never show a cached older picture.
+ * Resizes `file`, uploads it to the Neon `avatars` bucket (server/api/me/avatar.put.ts, which
+ * also deletes the user's older ones) and sets its URL as the user's profile image. Each upload
+ * gets a new URL, so browsers never show a cached older picture.
  */
-export async function uploadAvatar(user: User, file: File) {
+export async function uploadAvatar(file: File) {
   const blob = await toSquareAvatar(file)
-  const ext = blob.type === 'image/webp' ? 'webp' : 'png'
-  const fileRef = storageRef(useFirebaseStorage(), `avatars/${user.uid}/${Date.now()}.${ext}`)
-
-  await uploadBytes(fileRef, blob, {
-    contentType: blob.type,
-    cacheControl: 'public, max-age=31536000, immutable'
-  })
-  await updateProfile(user, { photoURL: await getDownloadURL(fileRef) })
-  refreshCurrentUser()
-  await deleteOldAvatars(user.uid, fileRef.fullPath)
+  const { url } = await api<{ url: string }>('/api/me/avatar', { method: 'PUT', body: blob })
+  await unwrap(useAuthClient().updateUser({ image: url }))
+  await refreshCurrentUser({ fresh: true })
 }
 
-/** Clears the user's photoURL (including one from Google) and deletes stored avatars. */
-export async function removeAvatar(user: User) {
-  await updateProfile(user, { photoURL: null })
-  refreshCurrentUser()
-  await deleteOldAvatars(user.uid)
+/** Clears the user's profile image (including one from Google) and deletes stored avatars. */
+export async function removeAvatar() {
+  await unwrap(useAuthClient().updateUser({ image: null }))
+  await refreshCurrentUser({ fresh: true })
+  try {
+    await api('/api/me/avatar', { method: 'DELETE' })
+  } catch (e) {
+    console.warn('Could not delete stored avatars', e)
+  }
 }

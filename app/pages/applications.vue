@@ -27,7 +27,7 @@ function setTab(value: Tab) {
   router.replace({ query: { ...route.query, status: value === 'all' ? undefined : value } })
 }
 
-// --- Paged list (cursor pagination, like the job lists) ---
+// --- Paged list (Previous / Next, like the job lists) ---
 
 const items = shallowRef<MyApplication[]>([])
 const pageIndex = ref(0)
@@ -48,7 +48,7 @@ async function loadPage(index: number) {
   loading.value = true
   failed.value = false
   try {
-    const page = await fetchMyApplications(u, PAGE_SIZE, cursors.value[index] ?? null, statusFilter.value)
+    const page = await fetchMyApplications(PAGE_SIZE, cursors.value[index] ?? null, statusFilter.value)
     if (load !== latestLoad) return
     items.value = page.items
     hasMore.value = page.hasMore
@@ -72,7 +72,7 @@ async function loadCount() {
   if (!u) return
   const load = ++latestCount
   try {
-    const count = await countMyApplications(u, statusFilter.value)
+    const count = await countMyApplications(statusFilter.value)
     if (load === latestCount) total.value = count
   } catch (e) {
     console.warn(e)

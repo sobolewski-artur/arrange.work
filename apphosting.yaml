@@ -14,11 +14,49 @@ runConfig:
 # Environment variables and secrets (BUILD and/or RUNTIME).
 # Nuxt runtime config can be overridden here, e.g. NUXT_PUBLIC_I18N_BASE_URL.
 # https://firebase.google.com/docs/app-hosting/configure#user-defined-environment
-# env:
+#
+# Data lives on Neon (project "Arrange", branch `production`); see README.md. The secrets below
+# must exist in Cloud Secret Manager before deploying. Get their values with
+#   neon env pull --branch production --file <some file outside the repo>
+# and set each one with, e.g.
+#   firebase apphosting:secrets:set neon-database-url
+env:
+  # Neon Auth (sign-in) for the production branch; the app proxies it at /api/auth.
+  - variable: NEON_AUTH_BASE_URL
+    value: https://ep-withered-poetry-alo1wxgu.neonauth.c-3.eu-central-1.aws.neon.tech/neondb/auth
+    availability:
+      - RUNTIME
+  # Signs the cached session cookie. Not from Neon: generate 32+ random characters, e.g.
+  #   node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
+  # Changing it signs everyone out of the cache only (sessions stay valid).
+  - variable: NEON_AUTH_COOKIE_SECRET
+    secret: neon-auth-cookie-secret
+    availability:
+      - RUNTIME
+  # Pooled connection string for Lakebase Postgres (DATABASE_URL).
+  - variable: DATABASE_URL
+    secret: neon-database-url
+    availability:
+      - RUNTIME
+  # Neon Object Storage (the `avatars` bucket, see neon.ts), production branch.
+  - variable: AWS_ENDPOINT_URL_S3
+    value: https://br-autumn-heart-al9t92p1.storage.c-3.eu-central-1.aws.neon.tech
+    availability:
+      - RUNTIME
+  - variable: AWS_REGION
+    value: eu-central-1
+    availability:
+      - RUNTIME
+  - variable: AWS_ACCESS_KEY_ID
+    secret: neon-storage-access-key-id
+    availability:
+      - RUNTIME
+  - variable: AWS_SECRET_ACCESS_KEY
+    secret: neon-storage-secret-access-key
+    availability:
+      - RUNTIME
 #   - variable: NUXT_PUBLIC_I18N_BASE_URL
 #     value: https://arrange.work
 #     availability:
 #       - BUILD
 #       - RUNTIME
-#   - variable: SOME_API_KEY
-#     secret: someApiKeySecretName

@@ -1,5 +1,0 @@
-# Makes functions/ its own pnpm root (separate lockfile), so Cloud Functions builds it
-# independently of the Nuxt app.
-allowBuilds:
-  '@firebase/util': false
-  protobufjs: false

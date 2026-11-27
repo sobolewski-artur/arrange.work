@@ -1,6 +1,4 @@
 <script setup lang="ts">
-import type { FirebaseError } from 'firebase/app'
-
 definePageMeta({ middleware: 'auth', layout: 'site' })
 
 const { t } = useI18n()
@@ -27,7 +25,6 @@ async function load() {
   if (!u) return
   state.value = 'loading'
   try {
-    await ensureLegacyJobsMoved(u)
     const found = await fetchJob(jobId.value)
     job.value = found
     if (!found) {
@@ -35,7 +32,7 @@ async function load() {
       return
     }
     if (found.owner === u.uid) loadApplications()
-    else myApplication.value = await fetchMyApplication(u, found.id)
+    else myApplication.value = await fetchMyApplication(found.id)
     state.value = 'ready'
   } catch (e) {
     console.error(e)
@@ -114,13 +111,12 @@ async function apply() {
   applyError.value = null
   try {
     await applyToJob(u, job.value, message.value.trim())
-    myApplication.value = await fetchMyApplication(u, job.value.id)
+    myApplication.value = await fetchMyApplication(job.value.id)
     formOpen.value = false
     message.value = ''
   } catch (e) {
     console.error(e)
-    const code = (e as FirebaseError).code
-    applyError.value = code === 'unavailable' ? t('auth.errors.network') : t('jobs.details.errors.apply')
+    applyError.value = isNetworkError(e) ? t('auth.errors.network') : t('jobs.details.errors.apply')
   } finally {
     sending.value = false
   }
@@ -131,12 +127,11 @@ const withdrawing = ref(false)
 const withdrawError = ref<string | null>(null)
 
 async function withdraw() {
-  const u = user.value
-  if (!u || !job.value || withdrawing.value) return
+  if (!user.value || !job.value || withdrawing.value) return
   withdrawing.value = true
   withdrawError.value = null
   try {
-    await withdrawApplication(u, job.value.id)
+    await withdrawApplication(job.value.id)
     myApplication.value = null
     confirmingWithdraw.value = false
   } catch (e) {
