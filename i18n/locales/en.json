@@ -120,11 +120,9 @@
         "description": "Description",
         "descriptionPlaceholder": "What needs to be done, what you already have and what the result should look like.",
         "country": "Country",
-        "locations": "Cities",
-        "locationsPlaceholder": "Type a city",
-        "locationsLimit": "Location limit reached",
-        "locationsHint": "Leave empty if the job can be done anywhere in the country. Type a city and press Enter. Up to {max}.",
-        "removeLocation": "Remove {value}",
+        "city": "City",
+        "cityPlaceholder": "Type or pick a city",
+        "cityHint": "Leave empty if the job can be done anywhere in the country.",
         "budget": "Budget",
         "budgetAmount": "Budget amount",
         "currency": "Currency",
@@ -178,9 +176,12 @@
       },
       "locationFilter": {
         "label": "Filter by location",
-        "placeholder": "Type or pick a city",
-        "limit": "Location limit reached",
-        "hint": "Shows jobs in any of these cities (up to {max})."
+        "country": "Country",
+        "anyCountry": "Any country",
+        "city": "City",
+        "cityPlaceholder": "Any city",
+        "cityNeedsCountry": "Pick a country first",
+        "hint": "Pick a country, then optionally a city in it."
       },
       "pagination": "Pagination",
       "range": "{from}–{to} of {total}",
@@ -260,7 +261,7 @@
       "yourJob": "Your job",
       "emptyFiltered": {
         "title": "No jobs match these filters",
-        "text": "Try other tags or cities, or clear the filters.",
+        "text": "Try other tags or another location, or clear the filters.",
         "clear": "Clear filters"
       },
       "empty": {

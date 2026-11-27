@@ -4,7 +4,7 @@ export const JOB_PAGE_SIZE = 20
 
 /**
  * State for a paged job list ("My jobs", "Find work"): tag and location filters and a sort, all
- * kept in the URL (?tags=seo,logo&locations=Kraków&sort=budgetHigh) so they survive reloads and Back, plus cursor
+ * kept in the URL (?tags=seo,logo&country=PL&city=Kraków&sort=budgetHigh) so they survive reloads and Back, plus cursor
  * pagination and the total count. Call in page setup.
  *
  * `scope` returns which jobs to list, or null while that isn't known yet (no signed-in user);
@@ -40,30 +40,38 @@ export function useJobList(options: {
       : normalizeTags([...filterDraft.value, tag], MAX_FILTER_TAGS)
   }
 
-  // --- Location filter (?locations=Kraków,Gdańsk), used by "Find work" ---
+  // --- Location filter (?country=PL&city=Kraków), used by "Find work" ---
+  // A city only counts together with a country.
 
-  const filterLocations = computed(() => normalizeLocations(String(route.query.locations ?? '').split(','), MAX_FILTER_LOCATIONS))
-  /** What the location box shows; pushed to the URL whenever it changes. */
-  const locationDraft = ref<string[]>([...filterLocations.value])
+  const filterPlace = computed<JobPlaceFilter>(() => {
+    const country = isCountryCode(route.query.country) ? route.query.country : null
+    return { country, city: country ? normalizeCity(route.query.city) : null }
+  })
+  /** What the location fields show; pushed to the URL whenever it changes. */
+  const placeDraft = ref<JobPlaceFilter>({ ...filterPlace.value })
+
+  const samePlace = (a: JobPlaceFilter, b: JobPlaceFilter) => a.country === b.country && a.city === b.city
 
   // One watcher for both filters, so changing both at once (e.g. "Clear filters") is a single
   // URL update; two separate replaces would race and the second would restore the first.
-  watch([filterDraft, locationDraft], ([tags, cities]) => {
-    if (tags.join(',') === filterTags.value.join(',') && cities.join(',') === filterLocations.value.join(',')) return
+  watch([filterDraft, placeDraft], ([tags, place]) => {
+    const city = place.country ? normalizeCity(place.city) : null
+    if (tags.join(',') === filterTags.value.join(',') && samePlace({ country: place.country, city }, filterPlace.value)) return
     router.replace({
       query: {
         ...route.query,
         tags: tags.length ? tags.join(',') : undefined,
-        locations: cities.length ? cities.join(',') : undefined
+        country: place.country ?? undefined,
+        city: city ?? undefined
       }
     })
   })
 
-  const filterActive = computed(() => filterTags.value.length > 0 || filterLocations.value.length > 0)
+  const filterActive = computed(() => filterTags.value.length > 0 || filterPlace.value.country !== null)
 
   function clearFilters() {
     filterDraft.value = []
-    locationDraft.value = []
+    placeDraft.value = { ...NO_PLACE_FILTER }
   }
 
   // --- Sort ("newest" is the default and left out of the URL) ---
@@ -90,7 +98,7 @@ export function useJobList(options: {
     loading.value = true
     failed.value = false
     try {
-      const page = await fetchJobs(scope, JOB_PAGE_SIZE, cursors.value[index] ?? null, filterTags.value, sort.value, filterLocations.value)
+      const page = await fetchJobs(scope, JOB_PAGE_SIZE, cursors.value[index] ?? null, filterTags.value, sort.value, filterPlace.value)
       if (load !== latestLoad) return
       jobs.value = page.jobs
       hasMore.value = page.hasMore
@@ -114,7 +122,7 @@ export function useJobList(options: {
     if (!scope) return
     const load = ++latestCount
     try {
-      const count = await countJobs(scope, filterTags.value, filterLocations.value)
+      const count = await countJobs(scope, filterTags.value, filterPlace.value)
       if (load === latestCount) total.value = count
     } catch (e) {
       // The count is only for the "1–20 of 57" label; the list works without it.
@@ -132,10 +140,10 @@ export function useJobList(options: {
   }, { immediate: true })
 
   // A new filter or sort starts again from the first page.
-  const resetKey: WatchSource<string> = () => `${filterTags.value.join(',')}|${filterLocations.value.join(',')}|${sort.value}`
+  const resetKey: WatchSource<string> = () => `${filterTags.value.join(',')}|${filterPlace.value.country}|${filterPlace.value.city}|${sort.value}`
   watch(resetKey, () => {
     filterDraft.value = [...filterTags.value]
-    locationDraft.value = [...filterLocations.value]
+    placeDraft.value = { ...filterPlace.value }
     if (!started.value) return
     cursors.value = [null]
     pageIndex.value = 0
@@ -173,8 +181,8 @@ export function useJobList(options: {
     filterActive,
     filterDraft,
     toggleFilterTag,
-    filterLocations,
-    locationDraft,
+    filterPlace,
+    placeDraft,
     clearFilters,
     sort,
     setSort,

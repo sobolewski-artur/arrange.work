@@ -1,5 +1,5 @@
 /**
- * GET /api/jobs?scope=mine|open&tags=…&locations=…&sort=…&offset=0&limit=20
+ * GET /api/jobs?scope=mine|open&tags=…&country=…&city=…&sort=…&offset=0&limit=20
  * One page of jobs (see jobListFilter for the filters). `hasMore` says whether another page exists.
  */
 export default defineEventHandler(async (event) => {

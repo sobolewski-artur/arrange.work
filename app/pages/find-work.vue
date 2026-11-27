@@ -9,7 +9,7 @@ useHead({ title: () => t('jobs.browse.title') })
 
 // Every open job, from all clients (including the user's own, which get a badge).
 const list = useJobList({ scope: () => user.value ? { kind: 'open' } : null })
-const { jobs, pageIndex, loading, failed, filterTags, filterActive, filterDraft, locationDraft, sort } = list
+const { jobs, pageIndex, loading, failed, filterTags, filterActive, filterDraft, placeDraft, sort } = list
 
 const listTop = ref<HTMLElement | null>(null)
 
@@ -29,7 +29,7 @@ const actionButton = 'inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 
       <JobListControls
         v-if="filterActive || jobs.length > 0 || pageIndex > 0"
         v-model:filter="filterDraft"
-        v-model:locations="locationDraft"
+        v-model:place="placeDraft"
         show-locations
         class="mt-8"
         :sort="sort"

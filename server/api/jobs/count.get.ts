@@ -1,4 +1,4 @@
-/** GET /api/jobs/count?scope=…&tags=…&locations=… — how many jobs the same list has in total. */
+/** GET /api/jobs/count?scope=…&tags=…&country=…&city=… — how many jobs the same list has in total. */
 export default defineEventHandler(async (event) => {
   const user = await requireUser(event)
   const { where, params } = jobListFilter(event, user)

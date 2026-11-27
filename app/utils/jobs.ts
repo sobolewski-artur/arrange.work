@@ -9,11 +9,20 @@ export type JobCursor = number
 /** Which jobs a list shows: the user's own jobs (any status), or every open job. */
 export type JobScope = { kind: 'mine', user: AppUser } | { kind: 'open' }
 
-function listQuery(scope: JobScope, tags: string[], locations: string[]) {
+/** "Find work" location filter: a country, and optionally a city in it. */
+export interface JobPlaceFilter {
+  country: string | null
+  city: string | null
+}
+
+export const NO_PLACE_FILTER: JobPlaceFilter = { country: null, city: null }
+
+function listQuery(scope: JobScope, tags: string[], place: JobPlaceFilter) {
   return {
     scope: scope.kind,
     tags: tags.length ? tags.join(',') : undefined,
-    locations: locations.length ? locations.join(',') : undefined
+    country: place.country ?? undefined,
+    city: place.country && place.city ? place.city : undefined
   }
 }
 
@@ -39,7 +48,7 @@ export async function deleteJob(id: string) {
 
 /**
  * One page of jobs in `scope`, in `sort` order, optionally only those with any of `tags`
- * and/or in any of `locations`. Pass the previous page's `cursor` as `after` for the next
+ * and/or in the country (and city) of `place`. Pass the previous page's `cursor` as `after` for the next
  * page (with the same scope, filters and sort).
  */
 export async function fetchJobs(
@@ -48,11 +57,11 @@ export async function fetchJobs(
   after: JobCursor | null = null,
   tags: string[] = [],
   sort: JobSort = 'newest',
-  locations: string[] = []
+  place: JobPlaceFilter = NO_PLACE_FILTER
 ) {
   const offset = after ?? 0
   const page = await api<{ jobs: Job[], hasMore: boolean }>('/api/jobs', {
-    query: { ...listQuery(scope, tags, locations), sort, offset, limit: pageSize }
+    query: { ...listQuery(scope, tags, place), sort, offset, limit: pageSize }
   })
   return {
     jobs: page.jobs.map(reviveJob),
@@ -62,8 +71,8 @@ export async function fetchJobs(
 }
 
 /** Number of jobs in `scope` matching the same filters. */
-export async function countJobs(scope: JobScope, tags: string[] = [], locations: string[] = []) {
-  const { count } = await api<{ count: number }>('/api/jobs/count', { query: listQuery(scope, tags, locations) })
+export async function countJobs(scope: JobScope, tags: string[] = [], place: JobPlaceFilter = NO_PLACE_FILTER) {
+  const { count } = await api<{ count: number }>('/api/jobs/count', { query: listQuery(scope, tags, place) })
   return count
 }
 

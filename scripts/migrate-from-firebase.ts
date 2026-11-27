@@ -33,7 +33,7 @@ import { getStorage } from 'firebase-admin/storage'
 import { Pool } from '@neondatabase/serverless'
 import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3'
 import { isCountryCode } from '../shared/utils/countries'
-import { cityKey, JOB_CURRENCIES, MAX_JOB_DESCRIPTION_LENGTH, MAX_JOB_TITLE_LENGTH, normalizeLocations } from '../shared/utils/jobs'
+import { cityKey, JOB_CURRENCIES, MAX_JOB_DESCRIPTION_LENGTH, MAX_JOB_TITLE_LENGTH, normalizeCity } from '../shared/utils/jobs'
 import { isApplicationStatus, MAX_APPLICANT_NAME_LENGTH, MAX_APPLICATION_MESSAGE_LENGTH } from '../shared/utils/applications'
 import { MAX_JOB_TAGS, normalizeTags } from '../shared/utils/tags'
 
@@ -86,7 +86,7 @@ async function mapUsers(firebaseUsers: UserRecord[]) {
 
 interface JobRow {
   id: string, owner: string, title: string, description: string, tags: string[], country: string | null
-  locations: string[], locationKeys: string[], budgetAmount: number | null, budgetCurrency: string | null
+  city: string | null, cityKey: string | null, budgetAmount: number | null, budgetCurrency: string | null
   createdAt: Date, updatedAt: Date | null
 }
 
@@ -94,8 +94,9 @@ interface JobRow {
 function jobRow(id: string, owner: string, data: DocumentData): JobRow | null {
   const title = String(data.title ?? '').trim().slice(0, MAX_JOB_TITLE_LENGTH)
   if (!owner || !title) return null
-  // Older jobs had a single `location` ({ mode, city }); keep its city, if any.
-  const locations = Array.isArray(data.locations) ? normalizeLocations(data.locations) : normalizeLocations([data.location?.city])
+  // Jobs had a list of `locations` (older ones a single `location`: { mode, city }); keep the
+  // first city, if any.
+  const city = normalizeCity(Array.isArray(data.locations) ? data.locations.find(c => normalizeCity(c)) : data.location?.city)
   const amount = typeof data.budget?.amount === 'number' ? Math.round(data.budget.amount) : 0
   const budgetOk = amount > 0 && (JOB_CURRENCIES as readonly unknown[]).includes(data.budget?.currency)
   return {
@@ -105,8 +106,8 @@ function jobRow(id: string, owner: string, data: DocumentData): JobRow | null {
     description: String(data.description ?? '').slice(0, MAX_JOB_DESCRIPTION_LENGTH),
     tags: normalizeTags(data.tags, MAX_JOB_TAGS),
     country: isCountryCode(data.country) ? data.country : null,
-    locations,
-    locationKeys: locations.map(cityKey),
+    city,
+    cityKey: city === null ? null : cityKey(city),
     budgetAmount: budgetOk ? amount : null,
     budgetCurrency: budgetOk ? data.budget.currency : null,
     createdAt: toDate(data.createdAt) ?? new Date(),
@@ -185,13 +186,13 @@ async function writeRows(jobs: JobRow[], applications: ApplicationRow[], users: 
     await client.query('begin')
     for (const j of jobs) {
       await client.query(
-        `insert into jobs (id, owner, title, description, tags, country, locations, location_keys, budget_amount, budget_currency, created_at, updated_at)
+        `insert into jobs (id, owner, title, description, tags, country, city, city_key, budget_amount, budget_currency, created_at, updated_at)
          values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
          on conflict (id) do update set owner = excluded.owner, title = excluded.title, description = excluded.description,
-           tags = excluded.tags, country = excluded.country, locations = excluded.locations, location_keys = excluded.location_keys,
+           tags = excluded.tags, country = excluded.country, city = excluded.city, city_key = excluded.city_key,
            budget_amount = excluded.budget_amount, budget_currency = excluded.budget_currency,
            created_at = excluded.created_at, updated_at = excluded.updated_at`,
-        [j.id, j.owner, j.title, j.description, j.tags, j.country, j.locations, j.locationKeys, j.budgetAmount, j.budgetCurrency, j.createdAt, j.updatedAt]
+        [j.id, j.owner, j.title, j.description, j.tags, j.country, j.city, j.cityKey, j.budgetAmount, j.budgetCurrency, j.createdAt, j.updatedAt]
       )
     }
     for (const a of applications) {

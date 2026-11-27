@@ -9,31 +9,24 @@ export const JOB_CURRENCIES = ['PLN', 'EUR', 'USD'] as const
 
 export type JobCurrency = typeof JOB_CURRENCIES[number]
 
-/** Where the work happens: a country (required) and up to this many cities in it (optional). */
-export const MAX_JOB_LOCATIONS = 10
+/** Where the work happens: a country (required) and one city in it (optional). */
 export const MAX_JOB_CITY_LENGTH = 80
-/** Polish cities suggested in the cities field (see CITY_SUGGESTIONS); others can be typed in. */
+/** Polish cities suggested in the city field (see CITY_SUGGESTIONS); others can be typed in. */
 export const SUGGESTED_CITIES = [
   'Warszawa', 'Kraków', 'Wrocław', 'Łódź', 'Poznań', 'Gdańsk', 'Gdynia', 'Szczecin', 'Bydgoszcz', 'Lublin',
   'Białystok', 'Katowice', 'Rzeszów', 'Toruń', 'Kielce', 'Olsztyn', 'Opole', 'Częstochowa', 'Radom', 'Zielona Góra'
 ] as const
 
 /**
- * Cleans a list of city names: whitespace collapsed, length capped, empty ones dropped,
- * duplicates (ignoring case) removed, at most `max`. Unlike tags, the case is kept, and a
- * name matching a suggested city takes its spelling ("kraków" → "Kraków").
+ * Cleans a city name: whitespace collapsed, length capped; null when empty or not a string.
+ * Unlike tags, the case is kept, and a name matching a suggested city takes its spelling
+ * ("kraków" → "Kraków").
  */
-export function normalizeLocations(values: unknown, max = MAX_JOB_LOCATIONS): string[] {
-  if (!Array.isArray(values)) return []
-  const result: string[] = []
-  for (const value of values) {
-    if (typeof value !== 'string') continue
-    const typed = value.replace(/\s+/g, ' ').trim().slice(0, MAX_JOB_CITY_LENGTH).trim()
-    const city = SUGGESTED_CITIES.find(c => c.toLocaleLowerCase() === typed.toLocaleLowerCase()) ?? typed
-    if (city && !result.some(c => c.toLocaleLowerCase() === city.toLocaleLowerCase())) result.push(city)
-    if (result.length === max) break
-  }
-  return result
+export function normalizeCity(value: unknown): string | null {
+  if (typeof value !== 'string') return null
+  const typed = value.replace(/\s+/g, ' ').trim().slice(0, MAX_JOB_CITY_LENGTH).trim()
+  if (!typed) return null
+  return SUGGESTED_CITIES.find(c => c.toLocaleLowerCase() === typed.toLocaleLowerCase()) ?? typed
 }
 
 /** Lowercased city, for matching cities regardless of case. */
@@ -48,8 +41,8 @@ export interface NewJob {
   description: string
   /** ISO 3166-1 alpha-2 code of the country where the work happens (see countries.ts). */
   country: string
-  /** Cities in that country (see normalizeLocations); may be empty ("anywhere in the country"). */
-  locations: string[]
+  /** A city in that country (see normalizeCity), or null for "anywhere in the country". */
+  city: string | null
   /** Whole amount in `currency`, or null when the client didn't give a budget. */
   budget: { amount: number, currency: JobCurrency } | null
 }
@@ -88,16 +81,13 @@ export function parseNewJob(value: unknown): NewJob | null {
     budget = { amount, currency: b.currency as JobCurrency }
   }
 
-  return { title, tags, description, country: v.country, locations: normalizeLocations(v.locations), budget }
+  return { title, tags, description, country: v.country, city: normalizeCity(v.city), budget }
 }
 
 // --- Lists ---
 
 export const JOB_SORTS = ['newest', 'oldest', 'budgetHigh', 'budgetLow'] as const
 export type JobSort = typeof JOB_SORTS[number]
-
-/** Most cities a "Find work" location filter can combine. */
-export const MAX_FILTER_LOCATIONS = 3
 
 /** Largest page of jobs the API returns. */
 export const MAX_JOB_PAGE_SIZE = 50

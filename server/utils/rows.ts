@@ -12,7 +12,7 @@ export function jobFromRow(r: Row, prefix = ''): Job {
     tags: r[`${prefix}tags`],
     description: r[`${prefix}description`],
     country: r[`${prefix}country`],
-    locations: r[`${prefix}locations`],
+    city: r[`${prefix}city`],
     // bigint arrives as a string.
     budget: amount === null ? null : { amount: Number(amount), currency: r[`${prefix}budget_currency`] },
     status: r[`${prefix}status`],
@@ -33,7 +33,7 @@ export function applicationFromRow(r: Row): Application {
 }
 
 /** Columns of `jobs`, for selecting a job joined to another table as `job_<column>`. */
-export const JOB_COLUMNS = ['id', 'owner', 'title', 'tags', 'description', 'country', 'locations', 'budget_amount', 'budget_currency', 'status', 'created_at']
+export const JOB_COLUMNS = ['id', 'owner', 'title', 'tags', 'description', 'country', 'city', 'budget_amount', 'budget_currency', 'status', 'created_at']
 
 /** `j.id as job_id, j.owner as job_owner, …` for a join on `jobs j`. */
 export const PREFIXED_JOB_COLUMNS = JOB_COLUMNS.map(c => `j.${c} as job_${c}`).join(', ')
