@@ -380,14 +380,14 @@
   },
   "verify": {
     "title": "Verify your email",
-    "sentTo": "We sent a verification link to {email}. Open it to activate your account, then come back here.",
+    "sentTo": "We sent a 6-digit code to {email}. Enter it below to activate your account.",
     "spamHint": "Can't find it? Check your spam folder.",
-    "continue": "I've verified my email",
-    "notYet": "Your email isn't verified yet. Click the link in the email first.",
-    "resend": "Resend email",
+    "continue": "Verify email",
+    "resend": "Send a new code",
     "resendIn": "Resend in {s}s",
-    "resent": "Verification email sent.",
-    "wrongAccount": "Wrong account?"
+    "resent": "We sent you a new code.",
+    "wrongAccount": "Wrong account?",
+    "codeLabel": "Verification code"
   },
   "auth": {
     "signIn": "Sign in",
@@ -408,7 +408,6 @@
     "password": "Password",
     "passwordHint": "At least {min} characters.",
     "forgotPassword": "Forgot password?",
-    "resetSent": "If an account exists for this email, we've sent a link to reset the password.",
     "noAccount": "Don't have an account?",
     "haveAccount": "Already have an account?",
     "signedInAs": "Signed in as {name}",
@@ -422,11 +421,21 @@
       "userDisabled": "This account has been disabled.",
       "tooManyRequests": "Too many attempts. Wait a moment and try again.",
       "enterEmailForReset": "Enter your email above, then click “Forgot password?” again.",
-      "operationNotAllowed": "This sign-in method is not enabled for this project.",
-      "unauthorizedDomain": "This domain is not authorized for sign-in.",
       "network": "Network error. Check your connection and try again.",
       "accountExists": "An account with this email already exists with a different sign-in method.",
-      "generic": "Sign-in failed. Please try again."
-    }
+      "generic": "Sign-in failed. Please try again.",
+      "passwordTooLong": "That password is too long.",
+      "invalidCode": "That code isn’t right. Check the email and try again.",
+      "codeExpired": "That code has expired. Send a new one.",
+      "tooManyCodeAttempts": "Too many wrong codes. Send a new one."
+    },
+    "resetCodeSent": "If an account exists for this email, we’ve sent it a 6-digit code to reset the password.",
+    "resetTitle": "Reset your password",
+    "resetSubtitle": "Enter the code we sent to {email} and choose a new password.",
+    "resetCode": "Code from the email",
+    "newPassword": "New password",
+    "setNewPassword": "Set new password",
+    "resendCode": "Send a new code",
+    "backToSignIn": "Back to sign in"
   }
 }

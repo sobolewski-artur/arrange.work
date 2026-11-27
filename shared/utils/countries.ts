@@ -1,6 +1,8 @@
+import { SUGGESTED_CITIES } from './jobs'
+
 /**
  * Countries a job can be in, as ISO 3166-1 alpha-2 codes (names come from the browser's
- * Intl.DisplayNames in the current language; see composables/useCountries.ts). Uninhabited
+ * Intl.DisplayNames in the current language; see app/composables/useCountries.ts). Uninhabited
  * territories are left out.
  */
 export const COUNTRY_CODES = (

@@ -26,3 +26,4 @@ emulator-data
 .env
 .env.*
 !.env.example
+.neon

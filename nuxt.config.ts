@@ -16,23 +16,6 @@ export default defineNuxtConfig({
     storageKey: 'arrange-work-color-mode'
   },
 
-  runtimeConfig: {
-    public: {
-      // Firebase web app config. Not secret (shipped to every browser) — access is enforced by
-      // Firestore security rules. Each key can be overridden with NUXT_PUBLIC_FIREBASE_<KEY>.
-      firebase: {
-        apiKey: 'AIzaSyA1p0kZOvy-e9dIs5h7hdWNV-7wdoV2oGc',
-        authDomain: 'arrange-work.firebaseapp.com',
-        databaseURL: 'https://arrange-work-default-rtdb.europe-west1.firebasedatabase.app',
-        projectId: 'arrange-work',
-        storageBucket: 'arrange-work.firebasestorage.app',
-        messagingSenderId: '28840533097',
-        appId: '1:28840533097:web:90488016783a18373556f8',
-        measurementId: 'G-DVS8L07VZL'
-      }
-    }
-  },
-
   vite: {
     plugins: [tailwindcss()]
   },

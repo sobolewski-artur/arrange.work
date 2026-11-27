@@ -1,6 +1,4 @@
 <script setup lang="ts">
-import type { Unsubscribe } from 'firebase/firestore'
-
 /**
  * Bell with an unread count and a dropdown of notifications: new applications to the user's
  * jobs, and decisions on their own applications. Opening the dropdown marks everything as
@@ -16,27 +14,26 @@ const notifications = shallowRef<AppNotification[]>([])
 const seenAt = ref<Date | null>(null)
 const failed = ref(false)
 
-// Live listeners, (re)started whenever the signed-in user changes.
-let stops: Unsubscribe[] = []
+// Polling, (re)started whenever the signed-in user changes (not on token refreshes).
+let stop: (() => void) | null = null
 function stopListening() {
-  stops.forEach(stop => stop())
-  stops = []
+  stop?.()
+  stop = null
 }
-watch(user, (u) => {
+watch(() => user.value?.uid, (uid) => {
   stopListening()
   notifications.value = []
   seenAt.value = null
-  if (!u) return
-  stops = [
-    watchNotifications(u, (list) => {
-      notifications.value = list
-      failed.value = false
-    }, (e) => {
-      console.warn('Could not load notifications', e)
-      failed.value = true
-    }),
-    watchNotificationsSeenAt(u, (date) => { seenAt.value = date })
-  ]
+  if (!uid) return
+  stop = watchNotifications((state) => {
+    notifications.value = state.notifications
+    // Don't move "seen" back if it was just marked here and an older poll answers after.
+    if (!seenAt.value || !state.seenAt || state.seenAt > seenAt.value) seenAt.value = state.seenAt
+    failed.value = false
+  }, (e) => {
+    console.warn('Could not load notifications', e)
+    failed.value = true
+  })
 }, { immediate: true })
 onBeforeUnmount(stopListening)
 
@@ -65,8 +62,9 @@ function toggle() {
   if (open.value) return close()
   highlightSince.value = seenAt.value
   open.value = true
-  const u = user.value
-  if (u && unreadCount.value > 0) markNotificationsSeen(u).catch(e => console.warn(e))
+  if (user.value && unreadCount.value > 0) {
+    markNotificationsSeen().then((date) => { seenAt.value = date }, e => console.warn(e))
+  }
 }
 
 function close({ focusButton = false } = {}) {
@@ -134,7 +132,7 @@ const buttonLabel = computed(() => unreadCount.value
           <h2 class="text-sm font-semibold">{{ $t('notifications.title') }}</h2>
         </div>
 
-        <!-- One of the two feeds can fail (e.g. while an index builds); show what loaded. -->
+        <!-- A failed refresh keeps showing what loaded before. -->
         <p v-if="failed" class="border-b border-line px-4 py-3 text-sm text-danger">{{ $t('notifications.error') }}</p>
         <p v-if="notifications.length === 0 && !failed" class="px-4 py-8 text-center text-sm text-muted">{{ $t('notifications.empty') }}</p>
         <ul v-if="notifications.length > 0" class="max-h-[min(24rem,calc(100dvh-8rem))] divide-y divide-line overflow-y-auto">
