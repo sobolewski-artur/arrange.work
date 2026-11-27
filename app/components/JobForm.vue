@@ -27,14 +27,16 @@ const tagInput = ref<{ commit: () => void } | null>(null)
 const description = ref(props.initial?.description ?? '')
 
 // Location: a country (required; jobs from before countries existed default to Poland) and
-// optional cities in it, with suggestions for the chosen country. Like tags, a city typed but
-// not yet confirmed with Enter is added on submit.
+// optionally one city in it, with suggestions for the chosen country.
 const { options: countryOptions } = useCountries()
 const country = ref(props.initial?.country ?? DEFAULT_COUNTRY)
 const citySuggestions = computed(() => CITY_SUGGESTIONS[country.value])
-const locations = ref<string[]>(normalizeLocations(props.initial?.locations ?? []))
-const locationPending = ref('')
-const locationInput = ref<{ commit: () => void } | null>(null)
+const city = ref(props.initial?.city ?? '')
+
+/** Tidies the city as typed (spacing, suggested spelling) once the field is left. */
+function tidyCity() {
+  city.value = normalizeCity(city.value) ?? ''
+}
 
 const budgetAmount = ref<number | ''>(props.initial?.budget?.amount ?? '')
 const currency = ref<JobCurrency>(props.initial?.budget?.currency ?? (locale.value === 'pl' ? 'PLN' : 'EUR'))
@@ -50,7 +52,6 @@ const canSubmit = computed(() =>
 function submit() {
   if (!canSubmit.value) return
   tagInput.value?.commit()
-  locationInput.value?.commit()
   if (tags.value.length === 0) return
   const amount = typeof budgetAmount.value === 'number' && budgetAmount.value > 0 ? Math.round(budgetAmount.value) : null
   emit('submit', {
@@ -58,7 +59,7 @@ function submit() {
     tags: tags.value,
     description: description.value.trim(),
     country: country.value,
-    locations: locations.value,
+    city: normalizeCity(city.value),
     budget: amount ? { amount, currency: currency.value } : null
   })
 }
@@ -123,31 +124,27 @@ const secondaryButton = 'inline-flex items-center justify-center rounded-lg bg-s
     </div>
 
     <div>
-      <div class="flex items-baseline justify-between gap-4">
-        <label for="job-locations" class="block text-sm font-medium">
-          {{ $t('jobs.new.fields.locations') }}
-          <span class="font-normal text-muted">({{ $t('jobs.new.fields.optional') }})</span>
-        </label>
-        <span class="text-xs text-subtle tabular-nums" aria-hidden="true">{{ locations.length }} / {{ MAX_JOB_LOCATIONS }}</span>
-      </div>
-      <TagInput
-        id="job-locations"
-        ref="locationInput"
-        v-model="locations"
-        v-model:pending="locationPending"
-        class="mt-1"
-        describedby="job-locations-hint"
-        :max="MAX_JOB_LOCATIONS"
-        :normalize="normalizeLocations"
-        :suggestions="citySuggestions"
-        remove-label-key="jobs.new.fields.removeLocation"
-        :placeholder="$t('jobs.new.fields.locationsPlaceholder')"
-        :limit-placeholder="$t('jobs.new.fields.locationsLimit')"
+      <label for="job-city" class="block text-sm font-medium">
+        {{ $t('jobs.new.fields.city') }}
+        <span class="font-normal text-muted">({{ $t('jobs.new.fields.optional') }})</span>
+      </label>
+      <input
+        id="job-city"
+        v-model="city"
+        type="text"
+        autocomplete="off"
+        aria-describedby="job-city-hint"
+        :list="citySuggestions ? 'job-city-suggestions' : undefined"
+        :maxlength="MAX_JOB_CITY_LENGTH"
+        :placeholder="$t('jobs.new.fields.cityPlaceholder')"
         :disabled="submitting"
-      />
-      <p id="job-locations-hint" class="mt-1 text-xs text-muted">
-        {{ $t('jobs.new.fields.locationsHint', { max: MAX_JOB_LOCATIONS }) }}
-      </p>
+        :class="inputClass"
+        @blur="tidyCity"
+      >
+      <datalist v-if="citySuggestions" id="job-city-suggestions">
+        <option v-for="suggestion in citySuggestions" :key="suggestion" :value="suggestion" />
+      </datalist>
+      <p id="job-city-hint" class="mt-1 text-xs text-muted">{{ $t('jobs.new.fields.cityHint') }}</p>
     </div>
 
     <div>

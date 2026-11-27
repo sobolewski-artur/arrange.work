@@ -120,11 +120,9 @@
         "description": "Opis",
         "descriptionPlaceholder": "Co trzeba zrobić, co już masz i jak ma wyglądać efekt końcowy.",
         "country": "Kraj",
-        "locations": "Miasta",
-        "locationsPlaceholder": "Wpisz miasto",
-        "locationsLimit": "Osiągnięto limit lokalizacji",
-        "locationsHint": "Zostaw puste, jeśli zlecenie można wykonać w dowolnym miejscu w kraju. Wpisz miasto i naciśnij Enter. Maksymalnie {max}.",
-        "removeLocation": "Usuń {value}",
+        "city": "Miasto",
+        "cityPlaceholder": "Wpisz lub wybierz miasto",
+        "cityHint": "Zostaw puste, jeśli zlecenie można wykonać w dowolnym miejscu w kraju.",
         "budget": "Budżet",
         "budgetAmount": "Kwota budżetu",
         "currency": "Waluta",
@@ -178,9 +176,12 @@
       },
       "locationFilter": {
         "label": "Filtruj po lokalizacji",
-        "placeholder": "Wpisz lub wybierz miasto",
-        "limit": "Osiągnięto limit lokalizacji",
-        "hint": "Pokazuje zlecenia w dowolnym z tych miast (maksymalnie {max})."
+        "country": "Kraj",
+        "anyCountry": "Dowolny kraj",
+        "city": "Miasto",
+        "cityPlaceholder": "Dowolne miasto",
+        "cityNeedsCountry": "Najpierw wybierz kraj",
+        "hint": "Wybierz kraj, a potem opcjonalnie miasto w nim."
       },
       "pagination": "Stronicowanie",
       "range": "{from}–{to} z {total}",
@@ -260,7 +261,7 @@
       "yourJob": "Twoje zlecenie",
       "emptyFiltered": {
         "title": "Brak zleceń pasujących do filtrów",
-        "text": "Spróbuj innych tagów lub miast albo wyczyść filtry.",
+        "text": "Spróbuj innych tagów lub innej lokalizacji albo wyczyść filtry.",
         "clear": "Wyczyść filtry"
       },
       "empty": {

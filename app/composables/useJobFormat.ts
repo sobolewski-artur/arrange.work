@@ -12,13 +12,12 @@ export function useJobFormat() {
   const { countryName } = useCountries()
 
   /**
-   * "Kraków, Gdańsk · Poland", just "Poland" with no cities, or just the cities for older
-   * jobs without a country. Empty when there's nothing to show.
+   * "Kraków · Poland", just "Poland" with no city, or just the city for older jobs without a
+   * country. Empty when there's nothing to show.
    */
-  function formatLocation(job: Pick<Job, 'country' | 'locations'>) {
-    const cities = job.locations.join(', ')
+  function formatLocation(job: Pick<Job, 'country' | 'city'>) {
     const country = job.country ? countryName(job.country) : ''
-    return [cities, country].filter(Boolean).join(' · ')
+    return [job.city, country].filter(Boolean).join(' · ')
   }
 
   function formatDate(date: Date) {

@@ -6,7 +6,7 @@ export default defineEventHandler(async (event) => {
   const rows = await db()`
     update jobs set
       title = ${c.title}, description = ${c.description}, tags = ${c.tags}, country = ${c.country},
-      locations = ${c.locations}, location_keys = ${c.locationKeys},
+      city = ${c.city}, city_key = ${c.cityKey},
       budget_amount = ${c.budgetAmount}, budget_currency = ${c.budgetCurrency}, updated_at = now()
     where id = ${id} and owner = ${user.uid}
     returning id

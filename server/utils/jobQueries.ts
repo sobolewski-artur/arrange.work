@@ -16,8 +16,9 @@ export function jobOrderBy(sort: unknown) {
 /**
  * `where` clause and parameters for a job list or count, from the query string:
  * - `scope=mine`: the user's own jobs (any status); `scope=open`: every open job.
- * - `tags=a,b`: jobs with any of these tags; `locations=Kraków,Gdańsk`: jobs in any of these
- *   cities (ignoring case). Both together: jobs matching both.
+ * - `tags=a,b`: jobs with any of these tags.
+ * - `country=PL`: jobs in that country; `city=Kraków`: jobs in that city (ignoring case).
+ * Filters combine: a job must match all that are given.
  */
 export function jobListFilter(event: H3Event, user: AuthUser) {
   const query = getQuery(event)
@@ -39,10 +40,15 @@ export function jobListFilter(event: H3Event, user: AuthUser) {
     params.push(tags)
     where.push(`tags && $${params.length}::text[]`)
   }
-  const cities = normalizeLocations(String(query.locations ?? '').split(','), MAX_FILTER_LOCATIONS).map(cityKey)
-  if (cities.length) {
-    params.push(cities)
-    where.push(`location_keys && $${params.length}::text[]`)
+  if (query.country !== undefined) {
+    if (!isCountryCode(query.country)) badRequest('Unknown country')
+    params.push(query.country)
+    where.push(`country = $${params.length}`)
+  }
+  const city = normalizeCity(query.city)
+  if (city) {
+    params.push(cityKey(city))
+    where.push(`city_key = $${params.length}`)
   }
   return { where: where.join(' and '), params }
 }
@@ -68,8 +74,8 @@ export function jobColumns(job: NewJob) {
     description: job.description,
     tags: job.tags,
     country: job.country,
-    locations: job.locations,
-    locationKeys: job.locations.map(cityKey),
+    city: job.city,
+    cityKey: job.city === null ? null : cityKey(job.city),
     budgetAmount: job.budget?.amount ?? null,
     budgetCurrency: job.budget?.currency ?? null
   }
